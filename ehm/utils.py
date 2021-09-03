@@ -3,6 +3,80 @@ import networkx as nx
 from networkx.algorithms.components.connected import connected_components
 
 
+class EHMNetNode:
+    def __init__(self, layer, detections=None, remainders=None):
+        # Index of the layer (track) in the network
+        self.layer = layer
+        # List of detection indices considered down to current node
+        self.detections = detections if detections is not None else set()
+        # List of remaining detection indices to be considered up to the next layer
+        self.remainders = remainders if remainders is not None else set()
+        # Index of the node when added to the network. This is set by the network and
+        # should not be edited.
+        self.ind = None
+
+
+class EHM2NetNode(EHMNetNode):
+    def __init__(self, layer, track_ind=None, subnet=0, detections=None, remainders=None):
+        super().__init__(layer, detections, remainders)
+        self.track_ind = track_ind
+        self.subnet = subnet
+
+    def __repr__(self):
+        return 'EHM2NetNode(ind={}, layer={}, track_ind={}, subnet={})'.format(self.ind, self.layer, self.track_ind, self.subnet)
+
+
+class EHMNet:
+    def __init__(self, nodes, edges=None):
+        for n_i, node in enumerate(nodes):
+            node.ind = n_i
+        self._nodes = nodes
+        self.edges = edges if edges is not None else dict()
+        self.nodes_per_track = dict()
+
+    @property
+    def num_nodes(self):
+        return len(self._nodes)
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    def add_node(self, node, parent, identity):
+        # Set the node index
+        node.ind = len(self.nodes)
+        # Add node to graph
+        self.nodes.append(node)
+        # Create edge from parent to child
+        self.edges[(parent, node)] = {identity}
+
+    def get_parents(self, node):
+        return [edge[0] for edge in self.edges if edge[1] == node]
+
+    def get_children(self, node):
+        return [edge[1] for edge in self.edges if edge[0] == node]
+
+    def get_children_per_detection(self, node, detection):
+        return [nodes[1] for nodes, detections in self.edges.items() if nodes[0] == node and detection in detections]
+
+
+class Tree:
+    def __init__(self, track, children, detections):
+        self.track = track
+        self.children = children
+        self.detections = detections
+
+    @property
+    def depth(self):
+        depth = 1
+        c_depth = 0
+        for child in self.children:
+            child_depth = child.depth
+            if child_depth > c_depth:
+                c_depth = child_depth
+        return depth + c_depth
+
+
 class Cluster:
     def __init__(self, rows=None, cols=None):
         self.rows = set(rows) if rows is not None else set()

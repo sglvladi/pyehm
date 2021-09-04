@@ -267,6 +267,110 @@ class EHM2:
 
         return assoc_prob_matrix
 
+    @classmethod
+    def construct_net(cls, validation_matrix):
+        """ Construct the EHM net as per Section 3.1 of [1]_
+
+        Parameters
+        ----------
+        validation_matrix: :class:`np.array`
+            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+            (aka. valid) associations between tracks and detections. The first column corresponds
+            to the null hypothesis (hence contains all ones).
+
+        Returns
+        -------
+        : Net
+            The constructed net object
+        """
+        num_tracks = validation_matrix.shape[0]
+
+        tree = cls.construct_tree(validation_matrix)
+
+        # Initialise net
+        subnet = 0
+        remainders = {0} | tree.detections
+        # Get indices of hypothesised detections for the track
+        v_detections = set(np.flatnonzero(validation_matrix[0, :]))
+        root_node = EHM2NetNode(layer=0, subnet=subnet, track=0, remainders=remainders, v_detections=v_detections)
+        net = EHMNet([root_node], validation_matrix=validation_matrix)
+
+        cls._construct_net(net, validation_matrix, tree, 0, 0)
+
+        for i in range(num_tracks):
+            net.nodes_per_track[i] = [node for node in net.nodes if node.track == i]
+        return net
+
+    @classmethod
+    def _construct_net(cls, net, validation_matrix, tree, layer, subnet):
+        layer += 1
+
+        # Get list of nodes in previous layer
+        parent_nodes = [node for node in net.nodes if node.layer == layer - 1 and node.subnet == subnet]
+
+        # For all nodes in previous layer
+        for parent in parent_nodes:
+
+            # Exclude any detections already considered by parent nodes (always include null)
+            v_detections_m1 = parent.v_detections
+
+            if tree.children:
+                for i, sub_tree in enumerate(tree.children):
+
+                    # Iterate over valid detections
+                    for j in v_detections_m1:
+
+                        # Get list of nodes in current layer
+                        child_nodes = [node for node in net.nodes if node.layer == layer and node.subnet == subnet + i]
+
+                        # Compute remainders up to next layer (i+1)
+                        remainders = {0}
+                        remainders |= sub_tree.detections
+                        remainders -= (parent.detections | {j}) - {0}
+
+                        # Find valid nodes in current layer that have the same remainders
+                        v_children = [child for child in child_nodes if remainders == child.remainders]
+
+                        # If layer is empty or no valid nodes exist, add new node
+                        if not len(v_children) or not len(child_nodes):
+                            # Create new node
+                            detections = parent.detections | {j}
+                            v_detections = set(np.flatnonzero(validation_matrix[sub_tree.track, :])) - detections | {0}
+                            child = EHM2NetNode(layer=layer, subnet=subnet + i, track=sub_tree.track,
+                                                detections=detections, remainders=remainders,
+                                                v_detections=v_detections)
+                            # Add node to net
+                            net.add_node(child, parent, j)
+                        else:
+                            # Simply add new edge or update existing one
+                            for child in v_children:
+                                net.add_edge(parent, child, j)
+                                child.detections |= parent.detections | {j}
+                                if j:
+                                    child.v_detections -= {j}
+            else:
+                child = next((node for node in net.nodes if node.layer == layer and node.subnet == subnet), None)
+                # Iterate over valid detections
+                for j in v_detections_m1:
+
+                    # If layer is empty or no valid nodes exist, add new node
+                    if not child:
+                        # Create new node
+                        detections = parent.detections | {j}
+                        child = EHM2NetNode(layer=layer, subnet=subnet, track=-1, detections=detections,
+                                            remainders={})
+                        # Add node to net
+                        net.add_node(child, parent, j)
+                    else:
+                        # Simply add new edge or update existing one
+                        net.add_edge(parent, child, j)
+                        child.detections |= parent.detections | {j}
+                        if j:
+                            child.v_detections -= {j}
+
+        for i, sub_tree in enumerate(tree.children):
+            cls._construct_net(net, validation_matrix, sub_tree, layer, subnet + i)
+
     @staticmethod
     def construct_tree(validation_matrix):
         """ Construct the EHM2 tree as per section 4.3 of [2]
@@ -315,111 +419,7 @@ class EHM2:
         return trees[0]
 
     @classmethod
-    def construct_net(cls, validation_matrix, tree):
-        """ Construct the EHM net as per Section 3.1 of [1]_
-
-        Parameters
-        ----------
-        validation_matrix: :class:`np.array`
-            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
-            (aka. valid) associations between tracks and detections. The first column corresponds
-            to the null hypothesis (hence contains all ones).
-
-        Returns
-        -------
-        : Net
-            The constructed net object
-        """
-        num_tracks = validation_matrix.shape[0]
-
-        # Initialise net
-        subnet = 0
-        root_node = EHM2NetNode(layer=-1, subnet=subnet, track_ind=-1)  # Root node is at layer -1
-        net = EHMNet([root_node])
-
-        # A layer in the network is created for each track (not counting the root-node layer)
-        cls._construct_net(net, validation_matrix, tree, -1, 0)
-
-        for i in range(num_tracks):
-            net.nodes_per_track[i] = [node for node in net.nodes if node.track_ind==i]
-        return net
-
-    @classmethod
-    def _construct_net(cls, net, validation_matrix, tree, layer, subnet):
-        layer += 1
-        track_ind = tree.track
-
-        # Get list of nodes in previous layer
-        parent_nodes = [node for node in net.nodes if node.layer == layer - 1 and node.subnet == subnet]
-
-        # Get indices of hypothesised detections for the track
-        v_detections = set(np.flatnonzero(validation_matrix[track_ind, :]))
-
-        # For all nodes in previous layer
-        for parent in parent_nodes:
-
-            # Exclude any detections already considered by parent nodes (always include null)
-            v_detections_m1 = (v_detections - parent.detections) | {0}
-
-            if tree.children:
-                for i, sub_tree in enumerate(tree.children):
-
-                    # Iterate over valid detections
-                    for j in v_detections_m1:
-
-                        # Get list of nodes in current layer
-                        child_nodes = [node for node in net.nodes if node.layer == layer and node.subnet == subnet+i]
-
-                        # Compute remainders up to next layer (i+1)
-                        remainders = {0}
-                        remainders |= sub_tree.detections
-                        remainders -= (parent.detections | {j}) - {0}
-
-                        # Find valid nodes in current layer that have the same remainders
-                        v_children = [child for child in child_nodes if remainders == child.remainders]
-
-                        # If layer is empty or no valid nodes exist, add new node
-                        if not len(v_children) or not len(child_nodes):
-                            # Create new node
-                            detections = parent.detections | {j}
-                            child = EHM2NetNode(layer=layer, subnet=subnet+i, track_ind=track_ind, detections=detections,
-                                                remainders=remainders)
-                            # Add node to net
-                            net.add_node(child, parent, j)
-                        else:
-                            # Simply add new edge or update existing one
-                            for child in v_children:
-                                if (parent, child) in net.edges:
-                                    net.edges[(parent, child)].add(j)
-                                else:
-                                    net.edges[(parent, child)] = {j}
-                                child.detections |= parent.detections | {j}
-            else:
-                child = next((node for node in net.nodes if node.layer == layer and node.subnet == subnet), None)
-                # Iterate over valid detections
-                for j in v_detections_m1:
-
-                    # If layer is empty or no valid nodes exist, add new node
-                    if not child:
-                        # Create new node
-                        detections = parent.detections | {j}
-                        child = EHM2NetNode(layer=layer, subnet=subnet, track_ind=track_ind, detections=detections,
-                                            remainders={})
-                        # Add node to net
-                        net.add_node(child, parent, j)
-                    else:
-                        # Simply add new edge or update existing one
-                        if (parent, child) in net.edges:
-                            net.edges[(parent, child)].add(j)
-                        else:
-                            net.edges[(parent, child)] = {j}
-                        child.detections |= parent.detections | {j}
-
-        for i, sub_tree in enumerate(tree.children):
-            cls._construct_net(net, validation_matrix, sub_tree, layer, subnet + i)
-
-    @classmethod
-    def compute_association_probabilities(cls, net, tree, likelihood_matrix):
+    def compute_association_probabilities(cls, net, likelihood_matrix):
         """ Compute the joint association weights, as described in Section 3.3 of [1]_
 
         Parameters
@@ -442,49 +442,67 @@ class EHM2:
         num_tracks, num_detections = likelihood_matrix.shape
         num_nodes = net.num_nodes
 
-        nodes_backwards = cls.order_backwards(net, tree)
-        nodes_forwards = list(reversed(nodes_backwards))
+        nodes_forwards = cls.order_forwards(net)
+        nodes_backwards = list(reversed(nodes_forwards))
 
         # Compute w_B (Backward-pass) - Eq. (47) of [1]
         w_B = np.zeros((num_nodes,))
         for parent in nodes_backwards:
             p_i = parent.ind
-            if not parent.remainders and parent.layer>-1:
+            if parent.track == -1:  # Endnode
                 w_B[p_i] = 1
                 continue
-            w = dict()
-            children = net.get_children(parent)
-            for child in children:
-                c_i = child.ind
-                det_inds = list(net.edges[(parent, child)])
-                for det_ind in det_inds:
-                    if det_ind in w:
-                        w[det_ind] = w[det_ind]*w_B[c_i]
-                    else:
-                        w[det_ind] = likelihood_matrix[child.track_ind, det_ind]*w_B[c_i]
-                a = 2
-            w_B[p_i] = np.sum([wi for _, wi in w.items()])
+
+            weight = 0
+            for det_ind in parent.v_detections:
+                v_children = net.children_per_detection[(parent, det_ind)]
+                weight_det = likelihood_matrix[parent.track, det_ind]
+                for child in v_children:
+                    c_i = child.ind
+                    weight_det *= w_B[c_i]
+                    a = 2
+                weight += weight_det
+            w_B[p_i] = weight
 
         # Compute w_F (Forward-pass) - Eq. (49) of [1]
         w_F = np.zeros((num_nodes,))
         w_F[0] = 1
-        for child in nodes_forwards[1:]:
-            c_i = child.ind
-            w = dict()
-            parents = net.get_children(child)
-            for parent in parents:
-                p_i = parent.ind
-                det_inds = list(net.edges[(parent, child)])
-                for det_ind in det_inds:
-                    
+        for parent in nodes_forwards:
+            p_i = parent.ind
+            for det_ind in parent.v_detections:
+                v_children = net.children_per_detection[(parent, det_ind)]
+                for child in v_children:
+                    c_i = child.ind
+                    sibling_inds = [c.ind for c in v_children if not c == child]
+                    sibling_weight = np.prod([w_B[s_i] for s_i in sibling_inds])
+                    weight = likelihood_matrix[parent.track, det_ind]*w_F[p_i]*sibling_weight
+                    w_F[c_i] += weight
+        a = 2
 
+        # Compute association probs - Eq. (46) of [1]
+        a_matrix = np.zeros(likelihood_matrix.shape)
+        for track in range(num_tracks):
+            for detection in range(num_detections):
+                for parent in net.nodes_per_track[track]:
+                    if detection not in parent.v_detections:
+                        continue
+                    weight = likelihood_matrix[track, detection] * w_F[parent.ind]
+                    v_children = net.children_per_detection[(parent, detection)]
+                    for child in v_children:
+                        weight *= w_B[child.ind]
+                    a_matrix[track, detection] += weight
+            a_matrix[track, :] /= np.sum(a_matrix[track, :])
+        a = 2
 
-
+    @classmethod
+    def order_forwards(cls, net):
+        return sorted(net.nodes, key=lambda x: x.layer)
 
     @classmethod
     def order_backwards(cls, net, tree):
-        order = [net.nodes[0]]  # The root node
-        return cls.order_backwards_recursive(net, tree) + order
+        order = cls.order_backwards_recursive(net, tree)
+        end_nodes = [n for n in net.nodes if n.track == -1]
+        return end_nodes + order
 
     @classmethod
     def order_backwards_recursive(cls, net, tree):

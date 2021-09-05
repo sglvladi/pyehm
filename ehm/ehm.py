@@ -367,7 +367,8 @@ class EHM2(EHM):
                 for tree in children:
                     detections |= tree.detections
                 detections |= v_detections
-                tree = Tree(i, children, detections, last_subtree_index)
+                subtree_index = np.max([c.subtree for c in children])
+                tree = Tree(i, children, detections, subtree_index)
                 trees = [trees[j] for j in range(len(trees)) if j not in matched]
             else:
                 children = []

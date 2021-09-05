@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -119,22 +121,25 @@ class EHMNet:
         labels = dict()
         for n in g.nodes:
             t = g.nodes[n]['track']
-            s = str(g.nodes[n]['measset'])
-            labels[n] = '{{{}, {}}}'.format(t, s)
+            s = str(g.nodes[n]['measset']) if len(g.nodes[n]['measset']) else 'Ø'
+            if t > -1:
+                labels[n] = '{{{}, {}}}'.format(t, s)
+            else:
+                labels[n] = 'Ø'
         pos_labels = {}
         for node, coords in pos.items():
-            # if g.nodes[node]['leaf']:
             pos_labels[node] = (coords[0] + 10, coords[1])
-        nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels)
+        nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels, horizontalalignment='left')
         edge_labels = nx.get_edge_attributes(g, 'detections')
         nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
 
 
 class Tree:
-    def __init__(self, track, children, detections):
+    def __init__(self, track, children, detections, subtree):
         self.track = track
         self.children = children
         self.detections = detections
+        self.subtree = subtree
 
     @property
     def depth(self):
@@ -145,6 +150,13 @@ class Tree:
             if child_depth > c_depth:
                 c_depth = child_depth
         return depth + c_depth
+
+    @property
+    def nodes(self):
+        nodes = [self]
+        for child in self.children:
+            nodes += child.nodes
+        return nodes
 
     @property
     def nx_graph(self):

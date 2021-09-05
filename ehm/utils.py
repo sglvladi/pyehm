@@ -107,7 +107,6 @@ class EHMNet:
             for parent in parents:
                 #label = ','.join([str(s) for s in self.edges[(parent, child)]])
                 label = str(self.edges[(parent, child)]).replace('{','').replace('}','')
-                print(label)
                 g.add_edge(parent.ind, child.ind, detections=label)
         return g
 

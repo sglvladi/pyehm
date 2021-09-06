@@ -1,6 +1,194 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
+import matplotlib.pyplot as plt
 import networkx as nx
+from networkx.drawing.nx_pydot import graphviz_layout
 from networkx.algorithms.components.connected import connected_components
+
+
+class EHMNetNode:
+    def __init__(self, layer, identity=None):
+        # Index of the layer (track) in the network
+        self.layer = layer
+        # Identity of the node
+        self.identity = identity if identity else set()
+        # Index of the node when added to the network. This is set by the network and
+        # should not be edited.
+        self.ind = None
+
+    def __repr__(self):
+        return 'EHMNetNode(ind={}, layer={}, identity={})'.format(self.ind, self.layer, self.identity)
+
+
+class EHM2NetNode(EHMNetNode):
+    def __init__(self, layer, track=None, subnet=0, identity=None):
+        super().__init__(layer, identity)
+        # Index of track this node relates to
+        self.track = track
+        # Index of subnet the node belongs to
+        self.subnet = subnet
+
+    def __repr__(self):
+        return 'EHM2NetNode(ind={}, layer={}, track={}, subnet={}, identity={})'.format(self.ind, self.layer,
+                                                                                        self.track, self.subnet,
+                                                                                        self.identity)
+
+
+class EHMNet:
+    def __init__(self, nodes, validation_matrix, edges=None):
+        for n_i, node in enumerate(nodes):
+            node.ind = n_i
+        self._nodes = nodes
+        self.validation_matrix = validation_matrix
+        self.edges = edges if edges is not None else dict()
+        self.parents_per_detection = dict()
+        self.children_per_detection = dict()
+        self.nodes_per_track = dict()
+
+    @property
+    def root(self):
+        return self.nodes[0]
+
+    @property
+    def num_nodes(self):
+        return len(self._nodes)
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def nodes_forward(self):
+        return sorted(self.nodes, key=lambda x: x.layer)
+
+    def add_node(self, node, parent, identity):
+        # Set the node index
+        node.ind = len(self.nodes)
+        # Add node to graph
+        self.nodes.append(node)
+        # Create edge from parent to child
+        self.edges[(parent, node)] = {identity}
+        # Create parent-child-detection look-up
+        self.parents_per_detection[(node, identity)] = {parent}
+        if (parent, identity) in self.children_per_detection:
+            self.children_per_detection[(parent, identity)].add(node)
+        else:
+            self.children_per_detection[(parent, identity)] = {node}
+
+    def add_edge(self, parent, child, identity):
+        if (parent, child) in self.edges:
+            self.edges[(parent, child)].add(identity)
+        else:
+            self.edges[(parent, child)] = {identity}
+        if (child, identity) in self.parents_per_detection:
+            self.parents_per_detection[(child, identity)].add(parent)
+        else:
+            self.parents_per_detection[(child, identity)] = {parent}
+        if (parent, identity) in self.children_per_detection:
+            self.children_per_detection[(parent, identity)].add(child)
+        else:
+            self.children_per_detection[(parent, identity)] = {child}
+
+    def get_parents(self, node):
+        return [edge[0] for edge in self.edges if edge[1] == node]
+
+    def get_children(self, node):
+        return [edge[1] for edge in self.edges if edge[0] == node]
+
+    @property
+    def nx_graph(self):
+        g = nx.Graph()
+        for child in sorted(self.nodes, key= lambda x: x.layer):
+            parents = self.get_parents(child)
+            if isinstance(child, EHM2NetNode):
+                track = child.track
+            else:
+                track = child.layer if child.layer > -1 else None
+            identity = child.identity
+            g.add_node(child.ind, track=track, identity=identity)
+            for parent in parents:
+                label = str(self.edges[(parent, child)]).replace('{','').replace('}','')
+                g.add_edge(parent.ind, child.ind, detections=label)
+        return g
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.gca()
+        g = self.nx_graph
+        pos = graphviz_layout(g, prog="dot")
+        nx.draw(g, pos, ax=ax, node_size=0)
+        labels = dict()
+        for n in g.nodes:
+            t = g.nodes[n]['track']
+            s = str(g.nodes[n]['identity']) if len(g.nodes[n]['identity']) else 'Ø'
+            if t is not None:
+                labels[n] = '{{{}, {}}}'.format(t, s)
+            else:
+                labels[n] = 'Ø'
+        pos_labels = {}
+        for node, coords in pos.items():
+            pos_labels[node] = (coords[0] + 10, coords[1])
+        nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels, horizontalalignment='left')
+        edge_labels = nx.get_edge_attributes(g, 'detections')
+        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+
+
+class Tree:
+    def __init__(self, track, children, detections, subtree):
+        self.track = track
+        self.children = children
+        self.detections = detections
+        self.subtree = subtree
+
+    @property
+    def depth(self):
+        depth = 1
+        c_depth = 0
+        for child in self.children:
+            child_depth = child.depth
+            if child_depth > c_depth:
+                c_depth = child_depth
+        return depth + c_depth
+
+    @property
+    def nodes(self):
+        nodes = [self]
+        for child in self.children:
+            nodes += child.nodes
+        return nodes
+
+    @property
+    def nx_graph(self):
+        g = nx.Graph()
+        return self._traverse_tree_nx(self, g)
+
+    @classmethod
+    def _traverse_tree_nx(cls, tree, g, parent=None):
+        child = g.number_of_nodes() + 1
+        track = tree.track
+        detections = tree.detections
+        g.add_node(child, track=track, detections=detections)
+        if parent:
+            g.add_edge(parent, child)
+        for sub_tree in tree.children:
+            cls._traverse_tree_nx(sub_tree, g, child)
+        return g
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.gca()
+        g = self.nx_graph
+        pos = graphviz_layout(g, prog="dot")
+        nx.draw(g, pos, ax=ax)
+        labels = {n: g.nodes[n]['track'] for n in g.nodes}  # if g.nodes[n]['leaf']}
+        pos_labels = {}
+        for node, coords in pos.items():
+            # if g.nodes[node]['leaf']:
+            pos_labels[node] = (coords[0], coords[1])
+        nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels, font_color='white')
 
 
 class Cluster:

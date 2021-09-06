@@ -9,7 +9,7 @@ from stonesoup.types.hypothesis import SingleProbabilityHypothesis
 from stonesoup.types.multihypothesis import MultipleHypothesis
 from stonesoup.types.numeric import Probability
 
-from .ehm import EHM
+from .ehm import EHM, EHM2, calc_validation_and_likelihood_matrices
 
 
 class JPDAWithEHM(JPDA):
@@ -53,8 +53,12 @@ class JPDAWithEHM(JPDA):
         track_list = list(tracks)
         detection_list = list(detections)
 
+        # Calculate validation and likelihood matrices
+        validation_matrix, likelihood_matrix = \
+            calc_validation_and_likelihood_matrices(track_list, detection_list, hypotheses)
+
         # Run EHM
-        assoc_prob_matrix = EHM.run(track_list, detection_list, hypotheses)
+        assoc_prob_matrix = EHM2.run(validation_matrix, likelihood_matrix)
 
         # Calculate MultiMeasurementHypothesis for each Track over all
         # available Detections with probabilities drawn from the association matrix

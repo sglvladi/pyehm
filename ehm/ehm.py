@@ -12,17 +12,19 @@ class EHM:
     """
 
     @classmethod
-    def run(cls, track_list, detection_list, hypotheses):
+    def run(cls, validation_matrix, likelihood_matrix):
         """ Run EHM to compute and return association probabilities
 
         Parameters
         ----------
-        track_list: list of :class:`Track`
-            Current tracked objects
-        detection_list : list of :class:`Detection`
-            Retrieved measurements
-        hypotheses: dict
-            Key value pairs of tracks with associated detections
+        validation_matrix: :class:`np.array`
+            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+            (aka. valid) associations between tracks and detections. The first column corresponds
+            to the null hypothesis (hence contains all ones).
+        likelihood_matrix: :class:`np.array`
+            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+            likelihoods for all combinations of tracks and detections. The first column corresponds
+            to the null hypothesis.
 
         Returns
         -------
@@ -31,10 +33,6 @@ class EHM:
             association probabilities for all combinations of tracks and detections. The first
             column corresponds to the null hypothesis.
         """
-
-        # Get validation and likelihood matrices
-        validation_matrix, likelihood_matrix = \
-            calc_validation_and_likelihood_matrices(track_list, detection_list, hypotheses)
 
         # Cluster tracks into groups that share common detections
         clusters, missed_tracks = gen_clusters(validation_matrix)

@@ -27,7 +27,7 @@ class EHMNetNode:
 
 class EHM2NetNode(EHMNetNode):
     def __init__(self, layer, track=None, subnet=0, detections=None, remainders=None, v_detections=None):
-        super().__init__(layer, detections, remainders)
+        super().__init__(layer, detections, v_detections, remainders)
         # Index of track this node relates to
         self.track = track
         # Index of subnet the node belongs to

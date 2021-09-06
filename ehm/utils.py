@@ -36,7 +36,7 @@ class EHM2NetNode(EHMNetNode):
 
 
 class EHMNet:
-    def __init__(self, nodes, edges=None, validation_matrix=None):
+    def __init__(self, nodes, validation_matrix, edges=None):
         for n_i, node in enumerate(nodes):
             node.ind = n_i
         self._nodes = nodes

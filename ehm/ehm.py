@@ -243,7 +243,7 @@ class EHM2(EHM):
         net = EHMNet([root_node], validation_matrix=validation_matrix)
 
         # Recursively construct next layers
-        cls._construct_net_layer(net, tree, validation_matrix, 1)
+        cls._construct_net_layer(net, tree, 1)
 
         # Compute and cache nodes per track
         for i in range(num_tracks):
@@ -252,13 +252,13 @@ class EHM2(EHM):
         return net
 
     @classmethod
-    def _construct_net_layer(cls, net, tree, validation_matrix, layer):
+    def _construct_net_layer(cls, net, tree, layer):
 
         # Get list of nodes in previous layer
         parent_nodes = [node for node in net.nodes if node.layer == layer - 1 and node.subnet == tree.subtree]
 
         # Get indices of hypothesised detections for the track
-        v_detections = set(np.flatnonzero(validation_matrix[tree.track, :]))
+        v_detections = set(np.flatnonzero(net.validation_matrix[tree.track, :]))
 
         # For all nodes in previous layer
         for parent in parent_nodes:
@@ -318,7 +318,7 @@ class EHM2(EHM):
 
         # Create new layers for each sub-tree
         for i, child_tree in enumerate(tree.children):
-            cls._construct_net_layer(net, child_tree, validation_matrix, layer + 1)
+            cls._construct_net_layer(net, child_tree, layer + 1)
 
     @staticmethod
     def construct_tree(validation_matrix):

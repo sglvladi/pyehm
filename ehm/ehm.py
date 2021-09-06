@@ -7,8 +7,8 @@ class EHM:
 
     An implementation of the EHM algorithm, as documented in [1]_.
 
-    [1] Maskell, S., Briers, M., and Wright, R., “Fast mutual exclusion”, in Signal and Data Processing of Small
-    Targets 2004
+    .. [1] Maskell, S., Briers, M. and Wright, R., 2004, August. Fast mutual exclusion. In Signal and Data Processing
+    of Small Targets 2004 (Vol. 5428, pp. 526-536). International Society for Optics and Photonics.
     """
 
     @classmethod
@@ -212,9 +212,8 @@ class EHM2(EHM):
 
     An implementation of the EHM2 algorithm, as documented in [2]_.
 
-    [2] P. Horridge and S. Maskell, "Real-Time Tracking Of Hundreds Of Targets With Efficient Exact JPDAF
-    Implementation," 2006
-
+    .. [2] Horridge, P. and Maskell, S., 2006, July. Real-time tracking of hundreds of targets with efficient exact
+    JPDAF implementation. In 2006 9th International Conference on Information Fusion (pp. 1-8). IEEE.
     """
 
     @classmethod

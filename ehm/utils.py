@@ -8,33 +8,31 @@ from networkx.algorithms.components.connected import connected_components
 
 
 class EHMNetNode:
-    def __init__(self, layer, detections=None, v_detections=None, remainders=None):
+    def __init__(self, layer, identity=None):
         # Index of the layer (track) in the network
         self.layer = layer
-        # Set of detection indices considered down to current node
-        self.detections = detections if detections is not None else set()
-        # Set of detections that can be considered by current node
-        self.v_detections = v_detections if v_detections else set()
-        # Set of remaining detection indices to be considered up to the next layer
-        self.remainders = remainders if remainders is not None else set()
+        # Identity of the node
+        self.identity = identity if identity else set()
         # Index of the node when added to the network. This is set by the network and
         # should not be edited.
         self.ind = None
 
     def __repr__(self):
-        return 'EHMNetNode(ind={}, layer={})'.format(self.ind, self.layer)
+        return 'EHMNetNode(ind={}, layer={}, identity={})'.format(self.ind, self.layer, self.identity)
 
 
 class EHM2NetNode(EHMNetNode):
-    def __init__(self, layer, track=None, subnet=0, detections=None, remainders=None, v_detections=None):
-        super().__init__(layer, detections, v_detections, remainders)
+    def __init__(self, layer, track=None, subnet=0, identity=None):
+        super().__init__(layer, identity)
         # Index of track this node relates to
         self.track = track
         # Index of subnet the node belongs to
         self.subnet = subnet
 
     def __repr__(self):
-        return 'EHM2NetNode(ind={}, layer={}, track={}, subnet={})'.format(self.ind, self.layer, self.track, self.subnet)
+        return 'EHM2NetNode(ind={}, layer={}, track={}, subnet={}, identity={})'.format(self.ind, self.layer,
+                                                                                        self.track, self.subnet,
+                                                                                        self.identity)
 
 
 class EHMNet:
@@ -106,15 +104,10 @@ class EHMNet:
             if isinstance(child, EHM2NetNode):
                 track = child.track
             else:
-                track = child.layer
-            if track > -1:
-                v_dets = set(np.flatnonzero(self.validation_matrix[track, :]))
-            else:
-                v_dets = set()
-            measset = v_dets - child.v_detections
-            g.add_node(child.ind, track=track, measset=measset)
+                track = child.layer if child.layer > -1 else None
+            identity = child.identity
+            g.add_node(child.ind, track=track, identity=identity)
             for parent in parents:
-                #label = ','.join([str(s) for s in self.edges[(parent, child)]])
                 label = str(self.edges[(parent, child)]).replace('{','').replace('}','')
                 g.add_edge(parent.ind, child.ind, detections=label)
         return g
@@ -129,8 +122,8 @@ class EHMNet:
         labels = dict()
         for n in g.nodes:
             t = g.nodes[n]['track']
-            s = str(g.nodes[n]['measset']) if len(g.nodes[n]['measset']) else 'Ø'
-            if t > -1:
+            s = str(g.nodes[n]['identity']) if len(g.nodes[n]['identity']) else 'Ø'
+            if t is not None:
                 labels[n] = '{{{}, {}}}'.format(t, s)
             else:
                 labels[n] = 'Ø'

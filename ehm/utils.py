@@ -8,24 +8,30 @@ from networkx.algorithms.components.connected import connected_components
 
 
 class EHMNetNode:
-    def __init__(self, layer, detections=None, remainders=None):
+    def __init__(self, layer, detections=None, v_detections=None, remainders=None):
         # Index of the layer (track) in the network
         self.layer = layer
-        # List of detection indices considered down to current node
+        # Set of detection indices considered down to current node
         self.detections = detections if detections is not None else set()
-        # List of remaining detection indices to be considered up to the next layer
+        # Set of detections that can be considered by current node
+        self.v_detections = v_detections if v_detections else set()
+        # Set of remaining detection indices to be considered up to the next layer
         self.remainders = remainders if remainders is not None else set()
         # Index of the node when added to the network. This is set by the network and
         # should not be edited.
         self.ind = None
 
+    def __repr__(self):
+        return 'EHMNetNode(ind={}, layer={})'.format(self.ind, self.layer)
+
 
 class EHM2NetNode(EHMNetNode):
     def __init__(self, layer, track=None, subnet=0, detections=None, remainders=None, v_detections=None):
         super().__init__(layer, detections, remainders)
+        # Index of track this node relates to
         self.track = track
+        # Index of subnet the node belongs to
         self.subnet = subnet
-        self.v_detections = v_detections if v_detections else set()
 
     def __repr__(self):
         return 'EHM2NetNode(ind={}, layer={}, track={}, subnet={})'.format(self.ind, self.layer, self.track, self.subnet)
@@ -95,15 +101,18 @@ class EHMNet:
     @property
     def nx_graph(self):
         g = nx.Graph()
-        track = self.root.track
-        v_dets = set(np.flatnonzero(self.validation_matrix[track, :]))
-        measset = v_dets - self.root.v_detections
-        g.add_node(self.root.ind, track=track, measset=measset)
-        for child in sorted(self.nodes, key= lambda x: x.layer)[1:]:
+        for child in sorted(self.nodes, key= lambda x: x.layer):
             parents = self.get_parents(child)
-            v_dets = set(np.flatnonzero(self.validation_matrix[child.track, :]))
+            if isinstance(child, EHM2NetNode):
+                track = child.track
+            else:
+                track = child.layer
+            if track > -1:
+                v_dets = set(np.flatnonzero(self.validation_matrix[track, :]))
+            else:
+                v_dets = set()
             measset = v_dets - child.v_detections
-            g.add_node(child.ind, track=child.track, measset=measset)
+            g.add_node(child.ind, track=track, measset=measset)
             for parent in parents:
                 #label = ','.join([str(s) for s in self.edges[(parent, child)]])
                 label = str(self.edges[(parent, child)]).replace('{','').replace('}','')

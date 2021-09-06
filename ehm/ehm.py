@@ -87,7 +87,7 @@ class EHM:
 
         # Initialise net
         root_node = EHMNetNode(layer=-1)  # Root node is at layer -1
-        net = EHMNet([root_node])
+        net = EHMNet([root_node], validation_matrix=validation_matrix)
 
         # A layer in the network is created for each track (not counting the root-node layer)
         num_layers = num_tracks
@@ -122,19 +122,22 @@ class EHM:
 
                     # If layer is empty or no valid nodes exist, add new node
                     if not len(v_children) or not len(child_nodes):
-                        # Create new node
+                        # Detections already considered
                         detections = parent.detections | {j}
-                        child = EHMNetNode(layer=i, detections=detections, remainders=remainders)
+                        # Valid detections for new node
+                        v_dets = set(np.flatnonzero(validation_matrix[i, :])) - detections | {0}
+                        # Create new node
+                        child = EHMNetNode(layer=i, detections=detections, v_detections=v_dets,
+                                           remainders=remainders)
                         # Add node to net
                         net.add_node(child, parent, j)
                     else:
                         # Simply add new edge or update existing one
                         for child in v_children:
-                            if (parent, child) in net.edges:
-                                net.edges[(parent, child)].add(j)
-                            else:
-                                net.edges[(parent, child)] = {j}
+                            net.add_edge(parent, child, j)
                             child.detections |= parent.detections | {j}
+                            if j:
+                                child.v_detections -= {j}
         return net
 
     @staticmethod

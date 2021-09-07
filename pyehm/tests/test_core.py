@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from .jdpa_naive import gen_random_scenario, jpda_naive
-from ..ehm import EHM, EHM2
+from ..core import EHM, EHM2
 
 
 @pytest.mark.parametrize(

@@ -6,7 +6,7 @@ dist/
 __pycache__/
 
 # Version from setuptools_scm
-ehm/_version.py
+pyehm/_version.py
 
 # coverage
 .coverage

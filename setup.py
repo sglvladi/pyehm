@@ -1,19 +1,23 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import setup, find_packages
 
-VERSION = '0.0.1'
-DESCRIPTION = 'Efficient Hypothesis Management (EHM) Python Implementation'
+from pyehm import __version__ as version
 
 with open('README.md') as f:
-    LONG_DESCRIPTION = f.read()
+    long_description = f.read()
 
 # Setting up
 setup(
-    name="ehm",
-    version=VERSION,
+    name="pyehm",
+    version=version,
     author="Lyudmil Vladimirov",
     author_email="sglvladi@gmail.com",
-    description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
+    maintainer="University of Liverpool",
+    url='https://github.com/sglvladi/pyehm',
+    description='Efficient Hypothesis Management (EHM) Python Implementation',
+    long_description=long_description,
     long_description_content_type='text/markdown',
     packages=find_packages(),
     setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
@@ -21,11 +25,11 @@ setup(
     extras_require={
         'dev': ['pytest-flake8', 'pytest-cov']
     },
-    entry_points={'stonesoup.plugins': 'ehm = ehm'},
+    entry_points={'stonesoup.plugins': 'pyehm = pyehm'},
     python_requires='>=3.6',
-    keywords=['python', 'ehm'],
+    keywords=['python', 'pyehm', 'ehm'],
     classifiers=[
-        "Development Status :: 1 - Beta",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Eclipse Public License 2.0 (EPL-2.0)"
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",

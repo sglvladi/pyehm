@@ -99,7 +99,7 @@ class EHMNet:
     @property
     def nx_graph(self):
         g = nx.Graph()
-        for child in sorted(self.nodes, key= lambda x: x.layer):
+        for child in sorted(self.nodes, key=lambda x: x.layer):
             parents = self.get_parents(child)
             if isinstance(child, EHM2NetNode):
                 track = child.track
@@ -108,7 +108,7 @@ class EHMNet:
             identity = child.identity
             g.add_node(child.ind, track=track, identity=identity)
             for parent in parents:
-                label = str(self.edges[(parent, child)]).replace('{','').replace('}','')
+                label = str(self.edges[(parent, child)]).replace('{', '').replace('}', '')
                 g.add_edge(parent.ind, child.ind, detections=label)
         return g
 
@@ -241,9 +241,9 @@ def calc_validation_and_likelihood_matrices(tracks, detections, hypotheses):
     return validation_matrix, likelihood_matrix
 
 
-def to_graph(l):
+def to_graph(lst):
     G = nx.Graph()
-    for part in l:
+    for part in lst:
         # each sublist is a bunch of nodes
         G.add_nodes_from(part)
         # it also imlies a number of edges:
@@ -251,14 +251,14 @@ def to_graph(l):
     return G
 
 
-def to_edges(l):
+def to_edges(lst):
     """
         treat `l` as a Graph and return it's edges
         to_edges(['a','b','c','d']) -> [(a,b),(b,c),(c,d)]
     """
-    if not len(l):
+    if not len(lst):
         return
-    it = iter(l)
+    it = iter(lst)
     last = next(it)
     for current in it:
         yield last, current

@@ -8,7 +8,7 @@ def jpda_naive(validation_matrix, likelihood_matrix):
     possible_assoc = list()
     for track in range(num_tracks):
         track_possible_assoc = list()
-        v_detections = np.flatnonzero(validation_matrix[track,:])
+        v_detections = np.flatnonzero(validation_matrix[track, :])
         for detection in v_detections:
             track_possible_assoc.append((track, detection))
         possible_assoc.append(track_possible_assoc)
@@ -31,7 +31,7 @@ def jpda_naive(validation_matrix, likelihood_matrix):
 
     assoc_matrix = np.zeros((num_tracks, num_detections))
     for track in range(num_tracks):
-        v_detections = np.flatnonzero(validation_matrix[track,:])
+        v_detections = np.flatnonzero(validation_matrix[track, :])
         for detection in v_detections:
             prob = np.sum([lik for hyp, lik in valid_joint_hypotheses_lik.items() if (track, detection) in hyp])
             assoc_matrix[track, detection] = prob
@@ -63,6 +63,6 @@ def gen_random_scenario(num_tracks, num_detections):
     likelihood_matrix = np.zeros((num_tracks, num_detections + 1))
     for i in range(num_tracks):
         liks = np.random.rand(num_detections+1)
-        likelihood_matrix[i, :] = validation_matrix[i,:]*liks
+        likelihood_matrix[i, :] = validation_matrix[i, :]*liks
 
     return validation_matrix, likelihood_matrix

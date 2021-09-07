@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import EHMNetNode, EHM2NetNode, EHMNet, Tree, gen_clusters, calc_validation_and_likelihood_matrices
+from .utils import EHMNetNode, EHM2NetNode, EHMNet, Tree, gen_clusters
 
 
 class EHM:

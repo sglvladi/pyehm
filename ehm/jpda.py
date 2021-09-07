@@ -5,7 +5,8 @@ from stonesoup.types.hypothesis import SingleProbabilityHypothesis
 from stonesoup.types.multihypothesis import MultipleHypothesis
 from stonesoup.types.numeric import Probability
 
-from .ehm import EHM, EHM2, calc_validation_and_likelihood_matrices
+from .utils import calc_validation_and_likelihood_matrices
+from .ehm import EHM, EHM2
 
 
 class JPDAWithEHM(JPDA):

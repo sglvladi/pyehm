@@ -158,6 +158,3 @@ class JPDAWithEHM2(JPDAWithEHM):
     @staticmethod
     def _run_ehm(validation_matrix, likelihood_matrix):
         return EHM2.run(validation_matrix, likelihood_matrix)
-
-
-

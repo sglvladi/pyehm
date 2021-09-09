@@ -70,7 +70,7 @@ likelihood_matrix = np.array([[0.1, 0.9, 0, 0, 0],
 Based on the above, we can use either ```EHM``` or ```EHM2``` to compute the joint association probabilities matrix
 ```assoc_matrix``` as follows:
 ```python
-from pyehm import EHM, EHM2
+from pyehm.core import EHM, EHM2
 
 # Using EHM
 assoc_matrix = EHM.run(validation_matrix, likelihood_matrix)

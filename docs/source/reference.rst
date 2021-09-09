@@ -14,6 +14,7 @@ The interfaces of these classes are documented below.
 .. autoclass:: pyehm.core.EHM2
     :members:
     :show-inheritance:
+    :inherited-members:
 
 Utils API
 ---------

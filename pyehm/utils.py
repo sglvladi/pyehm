@@ -246,10 +246,10 @@ class EHM2Tree:
     ----------
     track: :class:`int`
         The index of the track represented by the root node of the tree
-    children: :class:`~.EHM2Tree`
+    children: :class:`list` of :class:`~.EHM2Tree`
         Sub-trees that are children of the current tree
-    detections: :class:`list` of :class:`int`
-        List of accumulated detections
+    detections: :class:`set` of :class:`int`
+        Set of accumulated detections
     subtree: :class:`int`
         Index of subtree the current tree belongs to.
     """
@@ -340,7 +340,7 @@ class Cluster:
         self.likelihood_matrix = likelihood_matrix
 
 
-def gen_clusters(validation_matrix, likelihood_matrix):
+def gen_clusters(validation_matrix, likelihood_matrix=None):
     """Cluster tracks into groups sharing detections
 
     Parameters
@@ -349,6 +349,11 @@ def gen_clusters(validation_matrix, likelihood_matrix):
         An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
         (aka. valid) associations between tracks and detections. The first column corresponds
         to the null hypothesis (hence contains all ones).
+    likelihood_matrix: :class:`numpy.ndarray`
+        A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+        likelihoods for all combinations of tracks and detections. The first column corresponds
+        to the null hypothesis. The default is None, in which case the likelihood matrices of
+        the generated clusters will also be None.
 
     Returns
     -------
@@ -385,7 +390,10 @@ def gen_clusters(validation_matrix, likelihood_matrix):
         tracks = sorted(tracks)
         v_detections = sorted(v_detections)
         c_validation_matrix = validation_matrix[tracks, :][:, v_detections]
-        c_likelihood_matrix = likelihood_matrix[tracks, :][:, v_detections]
+        if likelihood_matrix is not None:
+            c_likelihood_matrix = likelihood_matrix[tracks, :][:, v_detections]
+        else:
+            c_likelihood_matrix = None
         clusters.append(Cluster(tracks, v_detections, c_validation_matrix, c_likelihood_matrix))
 
     # Get tracks (rows) that are not associated to any detections

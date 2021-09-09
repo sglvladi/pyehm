@@ -9,59 +9,6 @@ class EHM:
 
     """
 
-    @classmethod
-    def run(cls, validation_matrix, likelihood_matrix):
-        """Run EHM to compute and return association probabilities
-
-        Parameters
-        ----------
-        validation_matrix : :class:`numpy.ndarray`
-            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
-            (aka. valid) associations between tracks and detections. The first column corresponds
-            to the null hypothesis (hence contains all ones).
-        likelihood_matrix: :class:`numpy.ndarray`
-            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
-            likelihoods for all combinations of tracks and detections. The first column corresponds
-            to the null hypothesis.
-
-        Returns
-        -------
-        :class:`numpy.ndarray`
-            A matrix of shape (num_tracks, num_detections + 1) containing the normalised
-            association probabilities for all combinations of tracks and detections. The first
-            column corresponds to the null hypothesis.
-        """
-
-        # Cluster tracks into groups that share common detections
-        clusters, missed_tracks = gen_clusters(validation_matrix, likelihood_matrix)
-
-        # Initialise the association probabilities matrix.
-        assoc_prob_matrix = np.zeros(likelihood_matrix.shape)
-        assoc_prob_matrix[missed_tracks, 0] = 1  # Null hypothesis is certain for missed tracks
-
-        # Perform EHM for each cluster
-        for cluster in clusters:
-
-            # Extract track and detection indices
-            c_tracks = cluster.tracks
-            c_detections = cluster.detections
-
-            # Extract validation and likelihood matrices for cluster
-            c_validation_matrix = cluster.validation_matrix
-            c_likelihood_matrix = cluster.likelihood_matrix
-
-            # Construct the EHM net
-            net = cls.construct_net(c_validation_matrix)
-
-            # Compute the association probabilities
-            c_assoc_prob_matrix = cls.compute_association_probabilities(net, c_likelihood_matrix)
-
-            # Map the association probabilities to the main matrix
-            for i, track in enumerate(c_tracks):
-                assoc_prob_matrix[track, c_detections] = c_assoc_prob_matrix[i, :]
-
-        return assoc_prob_matrix
-
     @staticmethod
     def construct_net(validation_matrix):
         """Construct the EHM net as per Section 3.1 of [EHM1]_
@@ -203,6 +150,59 @@ class EHM:
 
         return a_matrix
 
+    @classmethod
+    def run(cls, validation_matrix, likelihood_matrix):
+        """Run EHM to compute and return association probabilities
+
+        Parameters
+        ----------
+        validation_matrix : :class:`numpy.ndarray`
+            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+            (aka. valid) associations between tracks and detections. The first column corresponds
+            to the null hypothesis (hence contains all ones).
+        likelihood_matrix: :class:`numpy.ndarray`
+            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+            likelihoods for all combinations of tracks and detections. The first column corresponds
+            to the null hypothesis.
+
+        Returns
+        -------
+        :class:`numpy.ndarray`
+            A matrix of shape (num_tracks, num_detections + 1) containing the normalised
+            association probabilities for all combinations of tracks and detections. The first
+            column corresponds to the null hypothesis.
+        """
+
+        # Cluster tracks into groups that share common detections
+        clusters, missed_tracks = gen_clusters(validation_matrix, likelihood_matrix)
+
+        # Initialise the association probabilities matrix.
+        assoc_prob_matrix = np.zeros(likelihood_matrix.shape)
+        assoc_prob_matrix[missed_tracks, 0] = 1  # Null hypothesis is certain for missed tracks
+
+        # Perform EHM for each cluster
+        for cluster in clusters:
+
+            # Extract track and detection indices
+            c_tracks = cluster.tracks
+            c_detections = cluster.detections
+
+            # Extract validation and likelihood matrices for cluster
+            c_validation_matrix = cluster.validation_matrix
+            c_likelihood_matrix = cluster.likelihood_matrix
+
+            # Construct the EHM net
+            net = cls.construct_net(c_validation_matrix)
+
+            # Compute the association probabilities
+            c_assoc_prob_matrix = cls.compute_association_probabilities(net, c_likelihood_matrix)
+
+            # Map the association probabilities to the main matrix
+            for i, track in enumerate(c_tracks):
+                assoc_prob_matrix[track, c_detections] = c_assoc_prob_matrix[i, :]
+
+        return assoc_prob_matrix
+
 
 class EHM2(EHM):
     """ Efficient Hypothesis Management 2 (EHM2)
@@ -225,11 +225,43 @@ class EHM2(EHM):
         -------
         : :class:`~.EHMNet`
             The constructed net object
+
+        Raises
+        ------
+        ValueError
+            If the provided ``validation_matrix`` is such that tracks can be divided into separate clusters. See
+            the :ref:`Note <note1>` below for work-around.
+
+
+        .. _note1:
+
+        .. note::
+            If the provided ``validation_matrix`` is such that tracks can be divided into separate clusters, this
+            method will raise a ValueError exception. To work-around this issue, you can use the
+            :func:`~pyehm.utils.gen_clusters` function to first generate individual clusters and then generate a net
+            for each cluster, as shown below:
+
+            .. code-block:: python
+
+                from pyehm.core import EHM2
+                from pyehm.utils import gen_clusters
+
+                validation_matrix = <Your validation matrix>
+
+                clusters, _ = gen_clusters(validation_matrix)
+
+                nets = []
+                for cluster in clusters:
+                    nets.append(EHM2.construct_net(cluster.validation_matrix)
+
         """
         num_tracks = validation_matrix.shape[0]
 
         # Construct tree
-        tree = cls.construct_tree(validation_matrix)
+        try:
+            tree = cls.construct_tree(validation_matrix)
+        except ValueError:
+            raise ValueError('The provided validation matrix results in multiple clusters of tracks')
 
         # Initialise net
         root_node = EHM2NetNode(layer=0, track=0, subnet=0)
@@ -329,6 +361,34 @@ class EHM2(EHM):
         : :class:`~.EHM2Tree`
             The constructed tree object
 
+        Raises
+        ------
+        ValueError
+            If the provided ``validation_matrix`` is such that tracks can be divided into separate clusters. See
+            the :ref:`Note <note2>` below for work-around.
+
+
+        .. _note2:
+
+        .. note::
+            If the provided ``validation_matrix`` is such that tracks can be divided into separate clusters, this
+            method will raise a ValueError exception. To work-around this issue, you can use the
+            :func:`~pyehm.utils.gen_clusters` function to first generate individual clusters and then generate a tree
+            for each cluster, as shown below:
+
+            .. code-block:: python
+
+                from pyehm.core import EHM2
+                from pyehm.utils import gen_clusters
+
+                validation_matrix = <Your validation matrix>
+
+                clusters, _ = gen_clusters(validation_matrix)
+
+                trees = []
+                for cluster in clusters:
+                    trees.append(EHM2.construct_tree(cluster.validation_matrix)
+
         """
         num_tracks = validation_matrix.shape[0]
 
@@ -359,7 +419,7 @@ class EHM2(EHM):
             trees.append(tree)
 
         if len(trees) > 1:
-            raise Exception
+            raise ValueError('The provided validation matrix results in multiple clusters of tracks')
 
         tree = trees[0]
 

@@ -323,23 +323,29 @@ class Cluster:
 
     Parameters
     ----------
-    tracks: :class:`set` of `int`
+    tracks: :class:`list` of `int`
         Indices of tracks in cluster
-    detections: :class:`set` of `int`
+    detections: :class:`list` of `int`
         Indices of detections in cluster
+    validation_matrix: :class:`numpy.ndarray`
+        The validation matrix for tracks and detections in the cluster
+    likelihood_matrix: :class:`numpy.ndarray`
+        The likelihood matrix for tracks and detections in the cluster
 
     """
-    def __init__(self, tracks=None, detections=None):
-        self.tracks = set(tracks) if tracks is not None else set()
-        self.detections = set(detections) if detections is not None else set()
+    def __init__(self, tracks=None, detections=None, validation_matrix=None, likelihood_matrix=None):
+        self.tracks = tracks
+        self.detections = detections
+        self.validation_matrix = validation_matrix
+        self.likelihood_matrix = likelihood_matrix
 
 
-def gen_clusters(v_matrix):
+def gen_clusters(validation_matrix, likelihood_matrix):
     """Cluster tracks into groups sharing detections
 
     Parameters
     ----------
-    v_matrix: :class:`numpy.ndarray`
+    validation_matrix: :class:`numpy.ndarray`
         An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
         (aka. valid) associations between tracks and detections. The first column corresponds
         to the null hypothesis (hence contains all ones).
@@ -354,34 +360,39 @@ def gen_clusters(v_matrix):
     """
 
     # Validation matrix for all detections except null
-    v_matrix_true = v_matrix[:, 1:]
+    validation_matrix_true = validation_matrix[:, 1:]
 
     # Initiate parameters
-    num_rows, num_cols = np.shape(v_matrix_true)  # Number of tracks
+    num_tracks, num_detections = np.shape(validation_matrix_true)  # Number of tracks
 
     # Form clusters of tracks sharing measurements
-    unassoc_rows = set([i for i in range(num_rows)])
+    missed_tracks = set([i for i in range(num_tracks)])
     clusters = list()
 
     # List of tracks gated for each detection
-    v_lists = [np.flatnonzero(v_matrix_true[:, col_ind]) for col_ind in range(num_cols)]
+    v_lists = [np.flatnonzero(validation_matrix_true[:, detection]) for detection in range(num_detections)]
 
     # Get clusters of tracks sharing common detections
     G = to_graph(v_lists)
-    cluster_rows = [t for t in connected_components(G)]
+    track_clusters = [t for t in connected_components(G)]
 
     # Create cluster objects that contain the indices of tracks (rows) and detections (cols)
-    for rows in cluster_rows:
-        v_cols = set()
-        for row_ind in rows:
-            v_cols |= set(np.flatnonzero(v_matrix_true[row_ind, :])+1)
-        clusters.append(Cluster(rows, v_cols))
+    for tracks in track_clusters:
+        v_detections = {0}
+        for track in tracks:
+            v_detections |= set(np.flatnonzero(validation_matrix_true[track, :]) + 1)
+        # Extract validation and likelihood matrices for cluster
+        tracks = sorted(tracks)
+        v_detections = sorted(v_detections)
+        c_validation_matrix = validation_matrix[tracks, :][:, v_detections]
+        c_likelihood_matrix = likelihood_matrix[tracks, :][:, v_detections]
+        clusters.append(Cluster(tracks, v_detections, c_validation_matrix, c_likelihood_matrix))
 
     # Get tracks (rows) that are not associated to any detections
-    assoc_rows = set([j for i in cluster_rows for j in i])
-    unassoc_rows = unassoc_rows - assoc_rows
+    detected_tracks = set([j for i in track_clusters for j in i])
+    missed_tracks = missed_tracks - detected_tracks
 
-    return clusters, list(unassoc_rows)
+    return clusters, list(missed_tracks)
 
 
 def to_graph(lst):
@@ -389,7 +400,7 @@ def to_graph(lst):
     for part in lst:
         # each sublist is a bunch of nodes
         G.add_nodes_from(part)
-        # it also imlies a number of edges:
+        # it also implies a number of edges:
         G.add_edges_from(to_edges(part))
     return G
 

@@ -33,7 +33,7 @@ class EHM:
         """
 
         # Cluster tracks into groups that share common detections
-        clusters, missed_tracks = gen_clusters(validation_matrix)
+        clusters, missed_tracks = gen_clusters(validation_matrix, likelihood_matrix)
 
         # Initialise the association probabilities matrix.
         assoc_prob_matrix = np.zeros(likelihood_matrix.shape)
@@ -43,13 +43,12 @@ class EHM:
         for cluster in clusters:
 
             # Extract track and detection indices
-            # Note that the detection indices are adjusted to include the null hypothesis index (0)
-            track_inds = np.sort(list(cluster.tracks))
-            detection_inds = np.sort(np.array(list(cluster.detections | {0})))
+            c_tracks = cluster.tracks
+            c_detections = cluster.detections
 
             # Extract validation and likelihood matrices for cluster
-            c_validation_matrix = validation_matrix[track_inds, :][:, detection_inds]
-            c_likelihood_matrix = likelihood_matrix[track_inds, :][:, detection_inds]
+            c_validation_matrix = cluster.validation_matrix
+            c_likelihood_matrix = cluster.likelihood_matrix
 
             # Construct the EHM net
             net = cls.construct_net(c_validation_matrix)
@@ -58,8 +57,8 @@ class EHM:
             c_assoc_prob_matrix = cls.compute_association_probabilities(net, c_likelihood_matrix)
 
             # Map the association probabilities to the main matrix
-            for i, track_ind in enumerate(track_inds):
-                assoc_prob_matrix[track_ind, detection_inds] = c_assoc_prob_matrix[i, :]
+            for i, track in enumerate(c_tracks):
+                assoc_prob_matrix[track, c_detections] = c_assoc_prob_matrix[i, :]
 
         return assoc_prob_matrix
 

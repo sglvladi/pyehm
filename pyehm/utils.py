@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from typing import Union, List, Sequence
 
+import matplotlib.pyplot
+import networkx
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -8,6 +11,18 @@ from networkx.algorithms.components.connected import connected_components
 
 
 class EHMNetNode:
+    """A node in the :class:`~.EHMNet` constructed by :class:`~.EHM`.
+
+    Parameters
+    ----------
+    layer: :class:`int`
+        Index of the network layer in which the node is placed. Since a different layer in the network is built for
+        each track, this also represented the index of the track this node relates to.
+    identity: :class:`set` of :class:`int`
+        The identity of the node. As per Section 3.1 of [EHM1]_, "the identity for each node is an indication of how
+        measurement assignments made for tracks already considered affect assignments for tracks remaining to be
+        considered".
+    """
     def __init__(self, layer, identity=None):
         # Index of the layer (track) in the network
         self.layer = layer
@@ -22,6 +37,21 @@ class EHMNetNode:
 
 
 class EHM2NetNode(EHMNetNode):
+    """A node in the :class:`~.EHMNet` constructed by :class:`~.EHM2`.
+
+    Parameters
+    ----------
+    layer: :class:`int`
+        Index of the network layer in which the node is placed.
+    track: :class:`int`
+        Index of track this node relates to.
+    subnet: :class:`int`
+        Index of subnet to which the node belongs.
+    identity: :class:`set` of :class:`int`
+        The identity of the node. As per Section 3.1 of [EHM1]_, "the identity for each node is an indication of how
+        measurement assignments made for tracks already considered affect assignments for tracks remaining to be
+        considered".
+    """
     def __init__(self, layer, track=None, subnet=0, identity=None):
         super().__init__(layer, identity)
         # Index of track this node relates to
@@ -36,6 +66,21 @@ class EHM2NetNode(EHMNetNode):
 
 
 class EHMNet:
+    """Represents the nets constructed by :class:`~.EHM` and :class:`~.EHM2`.
+
+    Parameters
+    ----------
+    nodes: :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+        The nodes comprising the net.
+    validation_matrix: :class:`numpy.ndarray`
+        An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+        (aka. valid) associations between tracks and detections. The first column corresponds
+        to the null hypothesis (hence contains all ones).
+    edges: :class:`dict`
+        A dictionary that represents the edges between nodes in the network. The dictionary keys are tuples of the form
+        ```(parent, child)```, where ```parent``` and ```child``` are the source and target nodes respectively. The
+        values of the dictionary are the measurement indices that describe the parent-child relationship.
+    """
     def __init__(self, nodes, validation_matrix, edges=None):
         for n_i, node in enumerate(nodes):
             node.ind = n_i
@@ -47,57 +92,28 @@ class EHMNet:
         self.nodes_per_track = dict()
 
     @property
-    def root(self):
+    def root(self) -> Union[EHMNetNode, EHM2NetNode]:
+        """The root node of the net."""
         return self.nodes[0]
 
     @property
-    def num_nodes(self):
+    def num_nodes(self) -> int:
+        """Number of nodes in the net"""
         return len(self._nodes)
 
     @property
-    def nodes(self):
+    def nodes(self) -> Union[List[EHMNetNode], List[EHM2NetNode]]:
+        """The nodes comprising the net"""
         return self._nodes
 
     @property
-    def nodes_forward(self):
+    def nodes_forward(self) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
+        """The net nodes, ordered by increasing layer"""
         return sorted(self.nodes, key=lambda x: x.layer)
 
-    def add_node(self, node, parent, identity):
-        # Set the node index
-        node.ind = len(self.nodes)
-        # Add node to graph
-        self.nodes.append(node)
-        # Create edge from parent to child
-        self.edges[(parent, node)] = {identity}
-        # Create parent-child-detection look-up
-        self.parents_per_detection[(node, identity)] = {parent}
-        if (parent, identity) in self.children_per_detection:
-            self.children_per_detection[(parent, identity)].add(node)
-        else:
-            self.children_per_detection[(parent, identity)] = {node}
-
-    def add_edge(self, parent, child, identity):
-        if (parent, child) in self.edges:
-            self.edges[(parent, child)].add(identity)
-        else:
-            self.edges[(parent, child)] = {identity}
-        if (child, identity) in self.parents_per_detection:
-            self.parents_per_detection[(child, identity)].add(parent)
-        else:
-            self.parents_per_detection[(child, identity)] = {parent}
-        if (parent, identity) in self.children_per_detection:
-            self.children_per_detection[(parent, identity)].add(child)
-        else:
-            self.children_per_detection[(parent, identity)] = {child}
-
-    def get_parents(self, node):
-        return [edge[0] for edge in self.edges if edge[1] == node]
-
-    def get_children(self, node):
-        return [edge[1] for edge in self.edges if edge[0] == node]
-
     @property
-    def nx_graph(self):
+    def nx_graph(self) -> networkx.Graph:
+        """Return NetworkX representation of the net. Mainly used for plotting the net."""
         g = nx.Graph()
         for child in sorted(self.nodes, key=lambda x: x.layer):
             parents = self.get_parents(child)
@@ -112,7 +128,94 @@ class EHMNet:
                 g.add_edge(parent.ind, child.ind, detections=label)
         return g
 
-    def plot(self, ax=None):
+    def add_node(self, node: Union[EHMNetNode, EHM2NetNode], parent: Union[EHMNetNode, EHM2NetNode], detection: int):
+        """Add a new node in the network.
+
+        Parameters
+        ----------
+        node: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The node to be added.
+        parent: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The parent of the node.
+        detection: :class:`int`
+            Index of measurement representing the parent child relationship.
+        """
+        # Set the node index
+        node.ind = len(self.nodes)
+        # Add node to graph
+        self.nodes.append(node)
+        # Create edge from parent to child
+        self.edges[(parent, node)] = {detection}
+        # Create parent-child-detection look-up
+        self.parents_per_detection[(node, detection)] = {parent}
+        if (parent, detection) in self.children_per_detection:
+            self.children_per_detection[(parent, detection)].add(node)
+        else:
+            self.children_per_detection[(parent, detection)] = {node}
+
+    def add_edge(self, parent: Union[EHMNetNode, EHM2NetNode], child: Union[EHMNetNode, EHM2NetNode], detection: int):
+        """ Add edge between two nodes, or update an already existing edge by adding the detection to it.
+
+        Parameters
+        ----------
+        parent: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The parent node, i.e. the source of the edge.
+        child: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The child node, i.e. the target of the edge.
+        detection: :class:`int`
+            Index of measurement representing the parent child relationship.
+        """
+        if (parent, child) in self.edges:
+            self.edges[(parent, child)].add(detection)
+        else:
+            self.edges[(parent, child)] = {detection}
+        if (child, detection) in self.parents_per_detection:
+            self.parents_per_detection[(child, detection)].add(parent)
+        else:
+            self.parents_per_detection[(child, detection)] = {parent}
+        if (parent, detection) in self.children_per_detection:
+            self.children_per_detection[(parent, detection)].add(child)
+        else:
+            self.children_per_detection[(parent, detection)] = {child}
+
+    def get_parents(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
+        """Get the parents of a node.
+
+        Parameters
+        ----------
+        node: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The node whose parents should be returned
+
+        Returns
+        -------
+        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            List of parent nodes
+        """
+        return [edge[0] for edge in self.edges if edge[1] == node]
+
+    def get_children(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
+        """Get the children of a node.
+
+        Parameters
+        ----------
+        node: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            The node whose children should be returned
+
+        Returns
+        -------
+        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            List of child nodes
+        """
+        return [edge[1] for edge in self.edges if edge[0] == node]
+
+    def plot(self, ax: matplotlib.pyplot.Axes = None):
+        """Plot the net.
+
+        Parameters
+        ----------
+        ax: :class:`matplotlib.axes.Axes`
+            Axis on which to plot the net
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.gca()

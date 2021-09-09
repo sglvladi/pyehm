@@ -3,32 +3,30 @@ from .utils import EHMNetNode, EHM2NetNode, EHMNet, Tree, gen_clusters
 
 
 class EHM:
-    """ Efficient Hypothesis Management (EHM)
+    """Efficient Hypothesis Management (EHM)
 
-    An implementation of the EHM algorithm, as documented in [1]_.
+    An implementation of the EHM algorithm, as documented in [EHM1]_.
 
-    .. [1] Maskell, S., Briers, M. and Wright, R., 2004, August. Fast mutual exclusion. In Signal and Data Processing
-    of Small Targets 2004 (Vol. 5428, pp. 526-536). International Society for Optics and Photonics.
     """
 
     @classmethod
     def run(cls, validation_matrix, likelihood_matrix):
-        """ Run EHM to compute and return association probabilities
+        """Run EHM to compute and return association probabilities
 
         Parameters
         ----------
-        validation_matrix: :class:`np.array`
+        validation_matrix : :class:`numpy.ndarray`
             An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
             (aka. valid) associations between tracks and detections. The first column corresponds
             to the null hypothesis (hence contains all ones).
-        likelihood_matrix: :class:`np.array`
+        likelihood_matrix: :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
             likelihoods for all combinations of tracks and detections. The first column corresponds
             to the null hypothesis.
 
         Returns
         -------
-        :class:`np.array`
+        :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the normalised
             association probabilities for all combinations of tracks and detections. The first
             column corresponds to the null hypothesis.
@@ -67,18 +65,18 @@ class EHM:
 
     @staticmethod
     def construct_net(validation_matrix):
-        """ Construct the EHM net as per Section 3.1 of [1]_
+        """Construct the EHM net as per Section 3.1 of [EHM1]_
 
         Parameters
         ----------
-        validation_matrix: :class:`np.array`
+        validation_matrix: :class:`numpy.ndarray`
             An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
             (aka. valid) associations between tracks and detections. The first column corresponds
             to the null hypothesis (hence contains all ones).
 
         Returns
         -------
-        : Net
+        : :class:`~.EHMNet`
             The constructed net object
         """
         num_tracks = validation_matrix.shape[0]
@@ -134,20 +132,20 @@ class EHM:
 
     @staticmethod
     def compute_association_probabilities(net, likelihood_matrix):
-        """ Compute the joint association weights, as described in Section 3.3 of [1]_
+        """Compute the joint association weights, as described in Section 3.3 of [EHM1]_
 
         Parameters
         ----------
-        net: Net
+        net: :class:`~.EHMNet`
             A net object representing the valid joint association hypotheses
-        likelihood_matrix: :class:`np.array`
+        likelihood_matrix: :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
             likelihoods for all combinations of tracks and detections. The first column corresponds
             to the null hypothesis.
 
         Returns
         -------
-        :class:`np.array`
+        :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the normalised
             association probabilities for all combinations of tracks and detecrtons. The first
             column corresponds to the null hypothesis.
@@ -155,7 +153,7 @@ class EHM:
         num_tracks, num_detections = likelihood_matrix.shape
         num_nodes = net.num_nodes
 
-        # Compute p_D (Downward-pass) - Eq. (22) of [1]
+        # Compute p_D (Downward-pass) - Eq. (22) of [EHM1]
         p_D = np.zeros((num_nodes, ))
         p_D[0] = 1
         for child in net.nodes[1:]:
@@ -166,7 +164,7 @@ class EHM:
                 ids = list(net.edges[(parent, child)])
                 p_D[c_i] += np.sum(likelihood_matrix[child.layer, ids]*p_D[p_i])
 
-        # Compute p_U (Upward-pass) - Eq. (23) of [1]
+        # Compute p_U (Upward-pass) - Eq. (23) of [EHM1]
         p_U = np.zeros((num_nodes, ))
         p_U[-1] = 1
         for parent in reversed(net.nodes[:-1]):
@@ -177,7 +175,7 @@ class EHM:
                 ids = list(net.edges[(parent, child)])
                 p_U[p_i] += np.sum(likelihood_matrix[child.layer, ids]*p_U[c_i])
 
-        # Compute p_DT - Eq. (21) of [1]
+        # Compute p_DT - Eq. (21) of [EHM1]
         p_DT = np.zeros((num_detections, num_nodes))
         for child in net.nodes:
             c_i = child.ind
@@ -187,7 +185,7 @@ class EHM:
                 for j in ids:
                     p_DT[j, c_i] += p_D[p_i]
 
-        # Compute p_T - Eq. (20) of [1]
+        # Compute p_T - Eq. (20) of [EHM1]
         p_T = np.ones((num_detections, num_nodes))
         p_T[:, 0] = 0
         for node in net.nodes[1:]:
@@ -195,7 +193,7 @@ class EHM:
             for j in range(num_detections):
                 p_T[j, n_i] = p_U[n_i]*likelihood_matrix[node.layer, j]*p_DT[j, n_i]
 
-        # Compute association weights - Eq. (15) of [1]
+        # Compute association weights - Eq. (15) of [EHM1]
         a_matrix = np.zeros(likelihood_matrix.shape)
         for i in range(num_tracks):
             node_inds = [n_i for n_i, node in enumerate(net.nodes) if node.layer == i]
@@ -210,26 +208,23 @@ class EHM:
 class EHM2(EHM):
     """ Efficient Hypothesis Management 2 (EHM2)
 
-    An implementation of the EHM2 algorithm, as documented in [2]_.
-
-    .. [2] Horridge, P. and Maskell, S., 2006, July. Real-time tracking of hundreds of targets with efficient exact
-    JPDAF implementation. In 2006 9th International Conference on Information Fusion (pp. 1-8). IEEE.
+    An implementation of the EHM2 algorithm, as documented in [EHM2]_.
     """
 
     @classmethod
     def construct_net(cls, validation_matrix):
-        """ Construct the EHM net as per Section 4 of [2]_
+        """ Construct the EHM net as per Section 4 of [EHM2]_
 
         Parameters
         ----------
-        validation_matrix: :class:`np.array`
+        validation_matrix: :class:`numpy.ndarray`
             An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
             (aka. valid) associations between tracks and detections. The first column corresponds
             to the null hypothesis (hence contains all ones).
 
         Returns
         -------
-        : Net
+        : :class:`~.EHMNet`
             The constructed net object
         """
         num_tracks = validation_matrix.shape[0]
@@ -321,18 +316,18 @@ class EHM2(EHM):
 
     @staticmethod
     def construct_tree(validation_matrix):
-        """ Construct the EHM2 tree as per section 4.3 of [2]_
+        """ Construct the EHM2 tree as per section 4.3 of [EHM2]_
 
         Parameters
         ----------
-        validation_matrix: :class:`np.array`
+        validation_matrix: :class:`numpy.ndarray`
             An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
             (aka. valid) associations between tracks and detections. The first column corresponds
             to the null hypothesis (hence contains all ones).
 
         Returns
         -------
-        : Tree
+        : :class:`~.Tree`
             The constructed tree object
 
         """
@@ -378,20 +373,20 @@ class EHM2(EHM):
 
     @staticmethod
     def compute_association_probabilities(net, likelihood_matrix):
-        """ Compute the joint association weights, as described in Section 4.2 of [2]_
+        """ Compute the joint association weights, as described in Section 4.2 of [EHM2]_
 
         Parameters
         ----------
-        net: Net
+        net: :class:`~.EHMNet`
             A net object representing the valid joint association hypotheses
-        likelihood_matrix: :class:`np.array`
+        likelihood_matrix: :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
             likelihoods for all combinations of tracks and detections. The first column corresponds
             to the null hypothesis.
 
         Returns
         -------
-        :class:`np.array`
+        :class:`numpy.ndarray`
             A matrix of shape (num_tracks, num_detections + 1) containing the normalised
             association probabilities for all combinations of tracks and detecrtons. The first
             column corresponds to the null hypothesis.
@@ -402,7 +397,7 @@ class EHM2(EHM):
         nodes_forwards = net.nodes_forward
         nodes_backwards = list(reversed(nodes_forwards))
 
-        # Compute w_B (Backward-pass) - Eq. (47) of [2]
+        # Compute w_B (Backward-pass) - Eq. (47) of [EHM2]
         w_B = np.zeros((num_nodes,))
         for parent in nodes_backwards:
             p_i = parent.ind
@@ -423,7 +418,7 @@ class EHM2(EHM):
                 weight += weight_det
             w_B[p_i] = weight
 
-        # Compute w_F (Forward-pass) - Eq. (49) of [2]
+        # Compute w_F (Forward-pass) - Eq. (49) of [EHM2]
         w_F = np.zeros((num_nodes,))
         w_F[0] = 1
         for parent in nodes_forwards:
@@ -443,7 +438,7 @@ class EHM2(EHM):
                     weight = likelihood_matrix[parent.track, det_ind]*w_F[p_i]*sibling_weight
                     w_F[c_i] += weight
 
-        # Compute association probs - Eq. (46) of [2]
+        # Compute association probs - Eq. (46) of [EHM2]
         a_matrix = np.zeros(likelihood_matrix.shape)
         for track in range(num_tracks):
             v_detections = set(np.flatnonzero(net.validation_matrix[track, :]))

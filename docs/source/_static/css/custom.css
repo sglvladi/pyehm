@@ -1,0 +1,11 @@
+.rst-content .citation-reference, .rst-content .footnote-reference {
+    top: 0
+}
+
+.rst-content .citation-reference:after, .rst-content .footnote-reference:after {
+  content: "]"
+}
+
+.rst-content .citation-reference:before, .rst-content .footnote-reference:before {
+  content: "["
+}

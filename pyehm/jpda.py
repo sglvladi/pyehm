@@ -14,27 +14,24 @@ class JPDAWithEHM(JPDA):
 
     This is a faster alternative of the standard :class:`~.JPDA` algorithm, which makes use of
     Efficient Hypothesis Management (EHM) to efficiently compute the joint associations. See
-    Maskell et al. (2004) [1]_ for more details.
-
-    .. [1] Maskell, S., Briers, M. and Wright, R., 2004, August. Fast mutual exclusion. In Signal and Data Processing
-    of Small Targets 2004 (Vol. 5428, pp. 526-536). International Society for Optics and Photonics.
+    Maskell et al. (2004) [EHM1]_ for more details.
     """
 
     def associate(self, tracks, detections, timestamp, **kwargs):
-        """"Associate tracks and detections
+        """Associate tracks and detections
 
         Parameters
         ----------
-        tracks : set of :class:`~.Track`
+        tracks : set of :class:`stonesoup.types.track.Track`
             Tracks which detections will be associated to.
-        detections : set of :class:`~.Detection`
+        detections : set of :class:`stonesoup.types.detection.Detection`
             Detections to be associated to tracks.
-        timestamp : datetime.datetime
+        timestamp : :class:`datetime.datetime`
             Timestamp to be used for missed detections and to predict to.
 
         Returns
         -------
-        : mapping of :class:`~.Track` : :class:`~.Hypothesis`
+        : mapping of :class:`stonesoup.types.track.Track` : :class:`stonesoup.types.hypothesis.Hypothesis`
             Mapping of track to Hypothesis
         """
 
@@ -109,11 +106,8 @@ class JPDAWithEHM2(JPDAWithEHM):
     """ Joint Probabilistic Data Association with Efficient Hypothesis Management 2 (EHM2)
 
     This is an enhanced version of the :class:`~.JPDAWithEHM` algorithm, that makes use of the Efficient Hypothesis
-    Management 2 (EHM2) algorithm to efficiently compute the joint associations. See Horridge et al. (2006) [2]_ for
+    Management 2 (EHM2) algorithm to efficiently compute the joint associations. See Horridge et al. (2006) [EHM2]_ for
     more details.
-
-    .. [2] Horridge, P. and Maskell, S., 2006, July. Real-time tracking of hundreds of targets with efficient exact
-    JPDAF implementation. In 2006 9th International Conference on Information Fusion (pp. 1-8). IEEE.
     """
 
     @staticmethod

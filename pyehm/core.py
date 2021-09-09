@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import EHMNetNode, EHM2NetNode, EHMNet, Tree, gen_clusters
+from .utils import EHMNetNode, EHM2NetNode, EHMNet, EHM2Tree, gen_clusters
 
 
 class EHM:
@@ -44,8 +44,8 @@ class EHM:
 
             # Extract track and detection indices
             # Note that the detection indices are adjusted to include the null hypothesis index (0)
-            track_inds = np.sort(list(cluster.rows))
-            detection_inds = np.sort(np.array(list(cluster.cols | {0})))
+            track_inds = np.sort(list(cluster.tracks))
+            detection_inds = np.sort(np.array(list(cluster.detections | {0})))
 
             # Extract validation and likelihood matrices for cluster
             c_validation_matrix = validation_matrix[track_inds, :][:, detection_inds]
@@ -327,7 +327,7 @@ class EHM2(EHM):
 
         Returns
         -------
-        : :class:`~.Tree`
+        : :class:`~.EHM2Tree`
             The constructed tree object
 
         """
@@ -351,12 +351,12 @@ class EHM2(EHM):
                     detections |= tree.detections
                 detections |= v_detections
                 subtree_index = np.max([c.subtree for c in children])
-                tree = Tree(i, children, detections, subtree_index)
+                tree = EHM2Tree(i, children, detections, subtree_index)
                 trees = [trees[j] for j in range(len(trees)) if j not in matched]
             else:
                 children = []
                 last_subtree_index += 1
-                tree = Tree(i, children, v_detections, last_subtree_index)
+                tree = EHM2Tree(i, children, v_detections, last_subtree_index)
             trees.append(tree)
 
         if len(trees) > 1:

@@ -60,6 +60,6 @@ def test_clustering(validation_matrix, val_clusters, val_unnasoc_inds):
     clusters, unnasoc_inds = gen_clusters(validation_matrix)
     assert len(clusters) == len(val_clusters)
     for cluster, val_cluster in zip(clusters, val_clusters):
-        assert cluster.rows == val_cluster.rows
-        assert cluster.cols == val_cluster.cols
+        assert cluster.tracks == val_cluster.tracks
+        assert cluster.detections == val_cluster.detections
     assert set(unnasoc_inds) == set(val_unnasoc_inds)

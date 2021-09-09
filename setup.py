@@ -21,11 +21,11 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
-    install_requires=['numpy', 'networkx', 'stonesoup', 'setuptools>=42', 'pydot'],
+    install_requires=['numpy', 'networkx', 'stonesoup', 'setuptools>=42', 'pydot', 'matplotlib'],
     extras_require={
         'dev': ['pytest-flake8', 'pytest-cov', 'sphinx', 'sphinx_rtd_theme']
     },
-    entry_points={'stonesoup.plugins': 'pyehm = pyehm'},
+    entry_points={'stonesoup.plugins': 'pyehm = pyehm.plugins.stonesoup'},
     python_requires='>=3.6',
     keywords=['python', 'pyehm', 'ehm'],
     classifiers=[

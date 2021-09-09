@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 from stonesoup.dataassociator.probability import JPDA
 from stonesoup.types.detection import MissedDetection
 from stonesoup.types.hypothesis import SingleProbabilityHypothesis
 from stonesoup.types.multihypothesis import MultipleHypothesis
 from stonesoup.types.numeric import Probability
 
-from .utils import calc_validation_and_likelihood_matrices
-from .core import EHM, EHM2
+from ..core import EHM, EHM2
 
 
 class JPDAWithEHM(JPDA):
@@ -49,6 +49,51 @@ class JPDAWithEHM(JPDA):
     def _run_ehm(validation_matrix, likelihood_matrix):
         return EHM.run(validation_matrix, likelihood_matrix)
 
+    @staticmethod
+    def _calc_validation_and_likelihood_matrices(tracks, detections, hypotheses):
+        """ Compute the validation and likelihood matrices
+
+        Parameters
+        ----------
+        tracks: list of :class:`stonesoup.types.track.Track`
+            Current tracked objects
+        detections : list of :class:`stonesoup.types.detection.Detection`
+            Retrieved measurements
+        hypotheses: dict
+            Key value pairs of tracks with associated detections
+
+        Returns
+        -------
+        :class:`numpy.ndarray`
+            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+            (aka. valid) associations between tracks and detections. The first column corresponds
+            to the null hypothesis (hence contains all ones).
+        :class:`numpy.ndarray`
+            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+            likelihoods for all combinations of tracks and detections. The first column corresponds
+            to the null hypothesis.
+        """
+
+        # Ensure tracks and detections are lists (not sets)
+        tracks, detections = list(tracks), list(detections)
+
+        # Construct validation and likelihood matrices
+        # Both matrices have shape (num_tracks, num_detections + 1), where the first column
+        # corresponds to the null hypothesis.
+        num_tracks, num_detections = len(tracks), len(detections)
+        likelihood_matrix = np.zeros((num_tracks, num_detections + 1))
+        for i, track in enumerate(tracks):
+            for hyp in hypotheses[track]:
+                if not hyp:
+                    likelihood_matrix[i, 0] = hyp.weight
+                else:
+                    j = next(d_i for d_i, detection in enumerate(detections)
+                             if hyp.measurement == detection)
+                    likelihood_matrix[i, j + 1] = hyp.weight
+        validation_matrix = likelihood_matrix > 0
+
+        return validation_matrix, likelihood_matrix
+
     @classmethod
     def _compute_multi_hypotheses(cls, tracks, detections, hypotheses, time):
 
@@ -58,7 +103,7 @@ class JPDAWithEHM(JPDA):
 
         # Calculate validation and likelihood matrices
         validation_matrix, likelihood_matrix = \
-            calc_validation_and_likelihood_matrices(track_list, detection_list, hypotheses)
+            cls._calc_validation_and_likelihood_matrices(track_list, detection_list, hypotheses)
 
         # Run EHM
         assoc_prob_matrix = cls._run_ehm(validation_matrix, likelihood_matrix)
@@ -113,3 +158,6 @@ class JPDAWithEHM2(JPDAWithEHM):
     @staticmethod
     def _run_ehm(validation_matrix, likelihood_matrix):
         return EHM2.run(validation_matrix, likelihood_matrix)
+
+
+

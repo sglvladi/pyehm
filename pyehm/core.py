@@ -46,6 +46,9 @@ class EHM:
             for ii in range(i + 1, num_layers):
                 acc |= set(np.flatnonzero(validation_matrix[ii, :]))
 
+            # Get list of nodes in current layer
+            child_nodes = [node for node in net.nodes if node.layer == i]
+
             # For all nodes in previous layer
             for parent in parent_nodes:
 
@@ -54,9 +57,6 @@ class EHM:
 
                 # Iterate over valid detections
                 for j in v_detections_m1:
-
-                    # Get list of nodes in current layer
-                    child_nodes = [node for node in net.nodes if node.layer == i]
 
                     # Identity
                     identity = acc.intersection(parent.identity | {j}) - {0}
@@ -70,6 +70,8 @@ class EHM:
                         child = EHMNetNode(layer=i, identity=identity)
                         # Add node to net
                         net.add_node(child, parent, j)
+                        # Add node to list of child nodes
+                        child_nodes.append(child)
                     else:
                         # Simply add new edge or update existing one
                         for child in v_children:
@@ -291,18 +293,20 @@ class EHM2(EHM):
             # Exclude any detections already considered by parent nodes (always include null)
             v_detections_m1 = (v_detections - parent.identity) | {0}
 
+            # Get nodes in current layer
+            p_child_nodes = [node for node in net.nodes if node.layer == layer]
+
             # If this is not an end layer
             if tree.children:
 
                 # Process each subtree
                 for i, child_tree in enumerate(tree.children):
 
+                    # Get list of nodes in current layer and same subnet
+                    child_nodes = [node for node in p_child_nodes if node.subnet == child_tree.subtree]
+
                     # Iterate over valid detections
                     for j in v_detections_m1:
-
-                        # Get list of nodes in current layer
-                        child_nodes = [node for node in net.nodes if node.layer == layer
-                                       and node.subnet == child_tree.subtree]
 
                         # Compute accumulated measurements up to next layer (i+1)
                         acc = {0} | child_tree.detections
@@ -320,6 +324,8 @@ class EHM2(EHM):
                                                 identity=identity)
                             # Add node to net
                             net.add_node(child, parent, j)
+                            # Add node to list of child nodes
+                            child_nodes.append(child)
                         else:
                             # Simply add new edge or update existing one
                             for child in v_children:

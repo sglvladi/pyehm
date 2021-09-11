@@ -1,13 +1,18 @@
 # Python Efficient Hypothesis Management (PyEHM)
 
+[![License](https://img.shields.io/badge/License-EPL%202.0-red.svg)](https://opensource.org/licenses/EPL-2.0)
+[![CircleCI](https://circleci.com/gh/sglvladi/pyehm/tree/main.svg?style=svg&circle-token=4c2f3fb99ef265443b75ccdc5bc7bf118582a4db)](https://circleci.com/gh/sglvladi/pyehm/tree/main)
+
 PyEHM is a Python package that includes open-souce implementations of the Efficient Hypothesis Management (EHM) 
-Algorithms described in [1], [2]
+Algorithms described in [1], [2] and **covered by the patent** [3].
 
 > [1] Maskell, S., Briers, M. and Wright, R., 2004, August. Fast mutual exclusion. In Signal and Data Processing of 
 Small Targets 2004 (Vol. 5428, pp. 526-536). International Society for Optics and Photonics
 > 
 > [2] Horridge, P. and Maskell, S., 2006, July. Real-time tracking of hundreds of targets with efficient exact JPDAF 
 implementation. In 2006 9th International Conference on Information Fusion (pp. 1-8). IEEE 
+> 
+> [3] Maskell, S., 2003, July. Signal Processing with Reduced Combinatorial Complexity. Patent Reference:0315349.1
 
 ## Installation
 PyEHM is currently in active development under *beta*. To install the latest version from the GitHub repository:
@@ -99,11 +104,15 @@ data associator as follows:
 ```python
 from stonesoup.plugins.pyehm import JPDAWithEHM, JPDAWithEHM2
 
-associator = JPDAWithEHM(hypothesiser,...)
+associator = JPDAWithEHM(hypothesiser)
 # Or
-associator = JPDAWithEHM(hypothesiser,...)
+associator = JPDAWithEHM2(hypothesiser)
 ```
 
 ## License
 PyEHM is licenced under Eclipse Public License 2.0. See [License](https://github.com/sglvladi/pyehm/blob/main/LICENSE.md) for 
 more details.
+
+This software is the property of [QinetiQ Limited](https://www.qinetiq.com/en/) and any requests for use of the
+software for commercial use or other use outside of the Eclipse Public Licence should be made to QinetiQ
+Limited.

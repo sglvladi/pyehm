@@ -90,6 +90,9 @@ class EHMNet:
         self.children_per_detection = dict()
         self.nodes_per_track = dict()
 
+        self._parents = dict()
+        self._children = dict()
+
     @property
     def root(self) -> Union[EHMNetNode, EHM2NetNode]:
         """The root node of the net."""
@@ -147,10 +150,15 @@ class EHMNet:
         self.edges[(parent, node)] = {detection}
         # Create parent-child-detection look-up
         self.parents_per_detection[(node, detection)] = {parent}
-        if (parent, detection) in self.children_per_detection:
+        self._parents[node] = {parent}
+        try:
             self.children_per_detection[(parent, detection)].add(node)
-        else:
+        except KeyError:
             self.children_per_detection[(parent, detection)] = {node}
+        try:
+            self._children[parent].add(node)
+        except KeyError:
+            self._children[parent] = {node}
 
     def add_edge(self, parent: Union[EHMNetNode, EHM2NetNode], child: Union[EHMNetNode, EHM2NetNode], detection: int):
         """ Add edge between two nodes, or update an already existing edge by adding the detection to it.
@@ -164,18 +172,26 @@ class EHMNet:
         detection: :class:`int`
             Index of measurement representing the parent child relationship.
         """
-        if (parent, child) in self.edges:
+        try:
             self.edges[(parent, child)].add(detection)
-        else:
+        except KeyError:
             self.edges[(parent, child)] = {detection}
-        if (child, detection) in self.parents_per_detection:
+        try:
             self.parents_per_detection[(child, detection)].add(parent)
-        else:
+        except KeyError:
             self.parents_per_detection[(child, detection)] = {parent}
-        if (parent, detection) in self.children_per_detection:
+        try:
             self.children_per_detection[(parent, detection)].add(child)
-        else:
+        except KeyError:
             self.children_per_detection[(parent, detection)] = {child}
+        try:
+            self._children[parent].add(child)
+        except KeyError:
+            self._children[parent] = {child}
+        try:
+            self._parents[child].add(parent)
+        except KeyError:
+            self._parents[child] = {parent}
 
     def get_parents(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
         """Get the parents of a node.
@@ -190,7 +206,11 @@ class EHMNet:
         :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
             List of parent nodes
         """
-        return [edge[0] for edge in self.edges if edge[1] == node]
+        try:
+            parents = list(self._parents[node])
+        except KeyError:
+            parents = []
+        return parents  # [edge[0] for edge in self.edges if edge[1] == node]
 
     def get_children(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
         """Get the children of a node.
@@ -205,7 +225,11 @@ class EHMNet:
         :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
             List of child nodes
         """
-        return [edge[1] for edge in self.edges if edge[0] == node]
+        try:
+            children = list(self._children[node])
+        except KeyError:
+            children = []
+        return children  # [edge[1] for edge in self.edges if edge[0] == node]
 
     def plot(self, ax: plt.Axes = None):
         """Plot the net.

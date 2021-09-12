@@ -127,10 +127,14 @@ class EHM:
         p_DT = np.zeros((num_detections, num_nodes))
         for child in net.nodes:
             c_i = child.ind
-            v_edges = {edge: ids for edge, ids in net.edges.items() if edge[1] == child}
-            for edge, ids in v_edges.items():
-                p_i = edge[0].ind
-                for j in ids:
+            # v_edges = {edge: ids for edge, ids in net.edges.items() if edge[1] == child}
+            # for edge, ids in v_edges.items():
+            #     p_i = edge[0].ind
+            #     for j in ids:
+            #         p_DT[j, c_i] += p_D[p_i]
+            for parent in net.get_parents(child):
+                p_i = parent.ind
+                for j in net.edges[(parent, child)]:
                     p_DT[j, c_i] += p_D[p_i]
 
         # Compute p_T - Eq. (20) of [EHM1]
@@ -287,14 +291,14 @@ class EHM2(EHM):
         # Get indices of hypothesised detections for the track
         v_detections = set(np.flatnonzero(net.validation_matrix[tree.track, :]))
 
+        # Get nodes in current layer
+        p_child_nodes = [node for node in net.nodes if node.layer == layer]
+
         # For all nodes in previous layer
         for parent in parent_nodes:
 
             # Exclude any detections already considered by parent nodes (always include null)
             v_detections_m1 = (v_detections - parent.identity) | {0}
-
-            # Get nodes in current layer
-            p_child_nodes = [node for node in net.nodes if node.layer == layer]
 
             # If this is not an end layer
             if tree.children:
@@ -326,6 +330,7 @@ class EHM2(EHM):
                             net.add_node(child, parent, j)
                             # Add node to list of child nodes
                             child_nodes.append(child)
+                            p_child_nodes.append(child)
                         else:
                             # Simply add new edge or update existing one
                             for child in v_children:

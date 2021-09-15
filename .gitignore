@@ -17,3 +17,6 @@ htmlcov/
 
 # IDE
 .idea/
+
+# Notebooks
+examples/.ipynb_checkpoints

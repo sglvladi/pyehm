@@ -110,9 +110,11 @@ associator = JPDAWithEHM2(hypothesiser)
 ```
 
 ## License
-PyEHM is licenced under Eclipse Public License 2.0. See [License](https://github.com/sglvladi/pyehm/blob/main/LICENSE.md) for 
+PyEHM is licenced under Eclipse Public License 2.0. See [License](LICENSE) for
 more details.
 
 This software is the property of [QinetiQ Limited](https://www.qinetiq.com/en/) and any requests for use of the
 software for commercial use or other use outside of the Eclipse Public Licence should be made to QinetiQ
 Limited.
+
+The current QinetiQ contact is Richard Lane (rlane1 [at] qinetiq [dot] com).

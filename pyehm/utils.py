@@ -176,7 +176,7 @@ class EHMNet:
 
         if isinstance(node, EHM2NetNode):
             if node.layer + 1 > self._num_layers:
-                self._num_layers = node.layer +1
+                self._num_layers = node.layer + 1
         else:
             if node.layer + 2 > self._num_layers:
                 self._num_layers = node.layer + 2

@@ -19,7 +19,7 @@ setup(
     description='Efficient Hypothesis Management (EHM) Python Implementation',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=find_packages(),
+    packages=find_packages(exclude=('docs', '*.tests')),
     setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
     install_requires=['numpy', 'networkx', 'stonesoup', 'setuptools>=42', 'pydot', 'matplotlib'],
     extras_require={

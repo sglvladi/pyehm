@@ -81,8 +81,17 @@ class EHMNet:
         values of the dictionary are the measurement indices that describe the parent-child relationship.
     """
     def __init__(self, nodes, validation_matrix, edges=None):
+
+        self._num_layers = 0
+
         for n_i, node in enumerate(nodes):
             node.ind = n_i
+            if isinstance(node, EHM2NetNode):
+                if node.layer + 1 > self._num_layers:
+                    self._num_layers = node.layer + 1
+            else:
+                if node.layer + 2 > self._num_layers:
+                    self._num_layers = node.layer + 2
         self._nodes = nodes
         self.validation_matrix = validation_matrix
         self.edges = edges if edges is not None else dict()
@@ -104,6 +113,11 @@ class EHMNet:
         return len(self._nodes)
 
     @property
+    def num_layers(self) -> int:
+        """Number of layers in the net"""
+        return self._num_layers
+
+    @property
     def nodes(self) -> Union[List[EHMNetNode], List[EHM2NetNode]]:
         """The nodes comprising the net"""
         return self._nodes
@@ -122,7 +136,7 @@ class EHMNet:
             if isinstance(child, EHM2NetNode):
                 track = child.track
             else:
-                track = child.layer if child.layer > -1 else None
+                track = child.layer + 1 if child.layer + 2 < self.num_layers else None
             identity = child.identity
             g.add_node(child.ind, track=track, identity=identity)
             for parent in parents:
@@ -159,6 +173,13 @@ class EHMNet:
             self._children[parent].add(node)
         except KeyError:
             self._children[parent] = {node}
+
+        if isinstance(node, EHM2NetNode):
+            if node.layer + 1 > self._num_layers:
+                self._num_layers = node.layer +1
+        else:
+            if node.layer + 2 > self._num_layers:
+                self._num_layers = node.layer + 2
 
     def add_edge(self, parent: Union[EHMNetNode, EHM2NetNode], child: Union[EHMNetNode, EHM2NetNode], detection: int):
         """ Add edge between two nodes, or update an already existing edge by adding the detection to it.
@@ -231,7 +252,7 @@ class EHMNet:
             children = []
         return children  # [edge[1] for edge in self.edges if edge[0] == node]
 
-    def plot(self, ax: plt.Axes = None):
+    def plot(self, ax: plt.Axes = None, annotate=True):
         """Plot the net.
 
         Parameters
@@ -245,20 +266,21 @@ class EHMNet:
         g = self.nx_graph
         pos = graphviz_layout(g, prog="dot")
         nx.draw(g, pos, ax=ax, node_size=0)
-        labels = dict()
-        for n in g.nodes:
-            t = g.nodes[n]['track']
-            s = str(g.nodes[n]['identity']) if len(g.nodes[n]['identity']) else 'Ø'
-            if t is not None:
-                labels[n] = '{{{}, {}}}'.format(t, s)
-            else:
-                labels[n] = 'Ø'
-        pos_labels = {}
-        for node, coords in pos.items():
-            pos_labels[node] = (coords[0] + 10, coords[1])
-        nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels, horizontalalignment='left')
-        edge_labels = nx.get_edge_attributes(g, 'detections')
-        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+        if annotate:
+            labels = dict()
+            for n in g.nodes:
+                t = g.nodes[n]['track']
+                s = str(g.nodes[n]['identity']) if len(g.nodes[n]['identity']) else 'Ø'
+                if t is not None:
+                    labels[n] = '{{{}, {}}}'.format(t, s)
+                else:
+                    labels[n] = 'Ø'
+            pos_labels = {}
+            for node, coords in pos.items():
+                pos_labels[node] = (coords[0] + 10, coords[1])
+            nx.draw_networkx_labels(g, pos_labels, ax=ax, labels=labels, horizontalalignment='left')
+            edge_labels = nx.get_edge_attributes(g, 'detections')
+            nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
 
 
 class EHM2Tree:

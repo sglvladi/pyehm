@@ -1,0 +1,13 @@
+# General
+include LICENSE
+
+# Tests
+recursive-include pyehm *.py
+include tox.ini
+
+# Docs
+recursive-include docs/source *.py *.rst
+include docs/make.bat docs/Makefile
+graft docs/source/_static
+recursive-include docs/examples *.py *.rst
+prune docs/source/auto_*

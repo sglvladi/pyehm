@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import re
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
@@ -38,6 +39,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',
+    'sphinx_gallery.gen_gallery',
 ]
 napoleon_google_docstring = False
 
@@ -53,6 +55,12 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'stonesoup': ('https://stonesoup.readthedocs.io/en/latest/', None),
     'networkx': ('https://networkx.org/documentation/stable/', None)
+}
+
+sphinx_gallery_conf = {
+    'examples_dirs': ['../examples'],
+    'gallery_dirs': ['auto_examples'],
+    'filename_pattern': re.escape(os.sep),
 }
 
 # Add any paths that contain templates here, relative to this directory.

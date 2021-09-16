@@ -23,7 +23,7 @@ setup(
     setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
     install_requires=['numpy', 'networkx', 'stonesoup', 'setuptools>=42', 'pydot', 'matplotlib'],
     extras_require={
-        'dev': ['pytest-flake8', 'pytest-cov', 'sphinx', 'sphinx_rtd_theme']
+        'dev': ['pytest-flake8', 'pytest-cov', 'sphinx', 'sphinx_rtd_theme', 'sphinx-gallery>=0.8']
     },
     entry_points={'stonesoup.plugins': 'pyehm = pyehm.plugins.stonesoup'},
     python_requires='>=3.6',

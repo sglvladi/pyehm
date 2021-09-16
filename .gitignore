@@ -8,6 +8,10 @@ __pycache__/
 # Version from setuptools_scm
 pyehm/_version.py
 
+# Sphinx documentation
+/docs/build/
+/docs/source/auto*
+
 # coverage
 .coverage
 htmlcov/

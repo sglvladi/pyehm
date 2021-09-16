@@ -35,10 +35,10 @@ import numpy as np
 # where the null measurement hypothesis is given the index of 0. Then the ``validation_matrix`` would be a ``(4, 5)``
 # numpy array of the following form:
 
-validation_matrix = np.array([[1, 1, 0, 0, 0],  # 0 -> 0,1
-                              [1, 1, 1, 1, 0],  # 1 -> 0,1,2,3
-                              [1, 1, 1, 0, 0],  # 2 -> 0,1,2
-                              [1, 0, 0, 1, 1]]) # 3 -> 0,3,4
+validation_matrix = np.array([[1, 1, 0, 0, 0],   # 0 -> 0,1
+                              [1, 1, 1, 1, 0],   # 1 -> 0,1,2,3
+                              [1, 1, 1, 0, 0],   # 2 -> 0,1,2
+                              [1, 0, 0, 1, 1]])  # 3 -> 0,3,4
 
 # %%
 # The ``likelihood_matrix`` is such that each element ``likelihood_matrix[i, j]`` contains the respective likelihood

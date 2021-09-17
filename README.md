@@ -1,5 +1,6 @@
 # Python Efficient Hypothesis Management (PyEHM)
 
+[![PyPI](https://img.shields.io/pypi/v/pyehm?color=blue)](https://pypi.org/project/pyehm)
 [![Documentation Status](https://readthedocs.org/projects/pyehm/badge/?version=latest)](https://pyehm.readthedocs.io/en/latest/?badge=latest)
 [![CircleCI](https://circleci.com/gh/sglvladi/pyehm/tree/main.svg?style=shield)](https://circleci.com/gh/sglvladi/pyehm/tree/main)
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg)](https://opensource.org/licenses/EPL-2.0)

@@ -9,20 +9,12 @@ Algorithms described in [EHM1]_, [EHM2]_ and **covered by the patent** [EHMPAT]_
     JPDAF implementation. In 2006 9th International Conference on Information Fusion (pp. 1-8). IEEE
 .. [EHMPAT] Maskell, S., 2003, July. Signal Processing with Reduced Combinatorial Complexity. Patent Reference:0315349.1
 
-Contents
-========
+
 .. toctree::
+    :hidden:
     :maxdepth: 2
 
     install
     reference
     auto_examples/index
     license
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

@@ -54,8 +54,9 @@ likelihood_matrix = np.array([[0.9, 0.13, 0.1, 0, 0.97, 0, 0.94, 0.55, 0, 0],
 # ------------
 #
 # It is worth noticing that in the above example, targets 7 and 10 are conditionally independent of targets 8 and 9,
-# given target 6. This is because targets 7 and 10 share common measurements between them, but do not share any
-# measurements with targets 8 or 9. Yet all of them share measurements with target 6.
+# given target 6. This is because targets 7 and 10 share a common measurement (2), but do not share any
+# measurements with targets 8 or 9, which in turn have common measurements (4, 6, 7, 8). Yet, all of them
+# share measurements with target 6.
 #
 # This is important since :class:`~.EHM2` takes advantage of this conditional independence to reduce the number of
 # nodes in the constructed net and, as a result, achieve better computational performance than :class:`~.EHM`.
@@ -78,7 +79,7 @@ print('No. of nodes in EHM2 net: {}'.format(net2.num_nodes))
 # -------------
 #
 # Below we define the function ``jpda`` that computes the joint association probabilities based on the standard
-# JPDA recursion which a full enumeration of all the joint hypotheses.
+# JPDA recursion, which performs a full enumeration of all the joint hypotheses.
 
 def jpda(validation_matrix, likelihood_matrix):
     num_tracks, num_detections = validation_matrix.shape
@@ -168,7 +169,7 @@ print('EHM: {} seconds'.format(dt_ehm.total_seconds()))
 print('EHM2: {} seconds'.format(dt_ehm2.total_seconds()))
 
 # %%
-# The above results demonstrate clearly the advantages of using the :class:`~.EHM` and :class:`~.EHM2` classes over the
+# The above results demonstrate the advantages of using the :class:`~.EHM` and :class:`~.EHM2` classes over the
 # standard JPDA. Both the :class:`~.EHM` and :class:`~.EHM2` algorithms exhibit significant computational gains
 # compared to the standard JPDA, all while producing exactly the same results. We can also observe that :class:`~.EHM2`
 # is noticeably faster than :class:`~.EHM`.

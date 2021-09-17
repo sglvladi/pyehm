@@ -258,7 +258,9 @@ class EHMNet:
         Parameters
         ----------
         ax: :class:`matplotlib.axes.Axes`
-            Axis on which to plot the net
+            Axes on which to plot the net
+        annotate: :class:`bool`
+            Flag that dictates whether or not to draw node and edge labels on the plotted net. The default is ``True``
         """
         if ax is None:
             fig = plt.figure()
@@ -348,7 +350,7 @@ class EHM2Tree:
         Parameters
         ----------
         ax: :class:`matplotlib.axes.Axes`
-            Axis on which to plot the tree
+            Axes on which to plot the tree
         """
         if ax is None:
             fig = plt.figure()

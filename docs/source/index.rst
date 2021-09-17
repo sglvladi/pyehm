@@ -1,6 +1,6 @@
 Welcome to PyEHM's documentation!
 =================================
-PyEHM is an open-souce python package that includes implementations of the Efficient Hypothesis Management (EHM)
+PyEHM is an open-source python package that includes implementations of the Efficient Hypothesis Management (EHM)
 Algorithms described in [EHM1]_, [EHM2]_ and **covered by the patent** [EHMPAT]_.
 
 .. [EHM1] Maskell, S., Briers, M. and Wright, R., 2004, August. Fast mutual exclusion. In Signal and Data Processing

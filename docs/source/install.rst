@@ -3,7 +3,7 @@ Installation
 
 Install via ``pip``
 ^^^^^^^^^^^^^^^^^^^
-You install the latest release of PyEHM on PyPI by using:
+You can install the latest release of PyEHM on PyPI by using:
 
 .. code::
 
@@ -12,7 +12,7 @@ You install the latest release of PyEHM on PyPI by using:
 Install from source
 ^^^^^^^^^^^^^^^^^^^
 
-PyEHM is currently in active development under *beta*. To install the latest version from the GitHub repository:
+To install the latest version from the GitHub repository:
 
 .. code::
 

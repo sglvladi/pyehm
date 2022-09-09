@@ -3,28 +3,29 @@ workflows:
   version: 2
   test:
     jobs:
-      - python-36
       - python-37
       - python-38
       - python-39
+      - python-310
 jobs:
-  python-36: &test-template
+  python-37: &test-template
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.7
     steps:
       - checkout
       - restore_cache:
-          key: v1-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}
+          key: dependencies-{{ .Environment.CACHE_VERSION }}-{{ checksum "/home/circleci/.pyenv/version" }}-{{ checksum "setup.py" }}
       - run:
           name: Install Dependencies
           command: |
-            python3 -m venv venv
+            python -m venv venv
             . venv/bin/activate
+            pip install --upgrade pip
             pip install -e .[dev]
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "setup.py" }}
+          key: dependencies-{{ .Environment.CACHE_VERSION }}-{{ checksum "/home/circleci/.pyenv/version" }}-{{ checksum "setup.py" }}
       - run:
           name: Run Tests
           command: |
@@ -42,15 +43,15 @@ jobs:
               -f test-reports/coverage.xml \
               -F unittests \
               -n ${CIRCLE_BUILD_NUM}
-  python-37:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.7
   python-38:
     <<: *test-template
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
   python-39:
     <<: *test-template
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
+  python-310:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.10

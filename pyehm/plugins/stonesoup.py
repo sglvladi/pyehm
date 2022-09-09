@@ -117,12 +117,13 @@ class JPDAWithEHM(JPDA):
             single_measurement_hypotheses = list()
 
             # Null measurement hypothesis
+            null_hypothesis = next((hyp for hyp in hypotheses[track] if not hyp), None)
             prob_misdetect = Probability(assoc_prob_matrix[i, 0])
             single_measurement_hypotheses.append(
                 SingleProbabilityHypothesis(
-                    hypotheses[track][0].prediction,
+                    null_hypothesis.prediction,
                     MissedDetection(timestamp=time),
-                    measurement_prediction=hypotheses[track][0].measurement_prediction,
+                    measurement_prediction=null_hypothesis.measurement_prediction,
                     probability=prob_misdetect))
 
             # True hypotheses

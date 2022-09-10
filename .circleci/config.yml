@@ -43,6 +43,7 @@ jobs:
               -f test-reports/coverage.xml \
               -F unittests \
               -n ${CIRCLE_BUILD_NUM}
+    resource_class: large
   python-38:
     <<: *test-template
     docker:

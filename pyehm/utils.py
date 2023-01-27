@@ -83,6 +83,17 @@ class EHMNet:
     def __init__(self, nodes, validation_matrix, edges=None):
 
         self._num_layers = 0
+        self.validation_matrix = validation_matrix
+        self.edges = edges if edges is not None else dict()
+        self.parents_per_detection = dict()
+        self.children_per_detection = dict()
+        self.nodes_per_track = dict()
+        self.nodes_per_layer_subnet = dict()
+        self.nodes_per_identity = dict()
+
+        self._parents = dict()
+        self._children = dict()
+        self._nodes = nodes
 
         for n_i, node in enumerate(nodes):
             node.ind = n_i
@@ -92,15 +103,13 @@ class EHMNet:
             else:
                 if node.layer + 2 > self._num_layers:
                     self._num_layers = node.layer + 2
-        self._nodes = nodes
-        self.validation_matrix = validation_matrix
-        self.edges = edges if edges is not None else dict()
-        self.parents_per_detection = dict()
-        self.children_per_detection = dict()
-        self.nodes_per_track = dict()
 
-        self._parents = dict()
-        self._children = dict()
+            # Create layer-subnet-node look-up
+            if isinstance(node, EHM2NetNode):
+                try:
+                    self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
+                except KeyError:
+                    self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
 
     @property
     def root(self) -> Union[EHMNetNode, EHM2NetNode]:
@@ -177,6 +186,11 @@ class EHMNet:
         if isinstance(node, EHM2NetNode):
             if node.layer + 1 > self._num_layers:
                 self._num_layers = node.layer + 1
+            # Create layer-subnet-node look-up
+            try:
+                self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
+            except KeyError:
+                self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
         else:
             if node.layer + 2 > self._num_layers:
                 self._num_layers = node.layer + 2

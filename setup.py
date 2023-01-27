@@ -35,7 +35,7 @@ setup(
     python_requires='>=3.7',
     keywords=['python', 'pyehm', 'ehm'],
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: Eclipse Public License 2.0 (EPL-2.0)",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",

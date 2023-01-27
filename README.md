@@ -4,7 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/pyehm/badge/?version=latest)](https://pyehm.readthedocs.io/en/latest/?badge=latest)
 [![CircleCI](https://circleci.com/gh/sglvladi/pyehm/tree/main.svg?style=shield)](https://circleci.com/gh/sglvladi/pyehm/tree/main)
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg)](https://opensource.org/licenses/EPL-2.0)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6010846.svg)](https://doi.org/10.5281/zenodo.6010846)
+[![DOI](https://zenodo.org/badge/385604939.svg)](https://zenodo.org/badge/latestdoi/385604939)
 
 PyEHM is a Python package that includes open-source implementations of the Efficient Hypothesis Management (EHM) 
 Algorithms described in [1], [2] and **covered by the patent** [3].

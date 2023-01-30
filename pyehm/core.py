@@ -1,4 +1,5 @@
 import numpy as np
+
 from .utils import EHMNetNode, EHM2NetNode, EHMNet, EHM2Tree, gen_clusters
 
 
@@ -108,7 +109,7 @@ class EHM:
         num_nodes = net.num_nodes
 
         # Compute p_D (Downward-pass) - Eq. (22) of [EHM1]
-        p_D = np.zeros((num_nodes, ))
+        p_D = np.zeros((num_nodes,))
         p_D[0] = 1
         for child in net.nodes[1:]:
             c_i = child.ind
@@ -116,10 +117,10 @@ class EHM:
             for parent in parents:
                 p_i = parent.ind
                 ids = list(net.edges[(parent, child)])
-                p_D[c_i] += np.sum(likelihood_matrix[child.layer, ids]*p_D[p_i])
+                p_D[c_i] += np.sum(likelihood_matrix[child.layer, ids] * p_D[p_i])
 
         # Compute p_U (Upward-pass) - Eq. (23) of [EHM1]
-        p_U = np.zeros((num_nodes, ))
+        p_U = np.zeros((num_nodes,))
         p_U[-1] = 1
         for parent in reversed(net.nodes[:-1]):
             p_i = parent.ind
@@ -127,7 +128,7 @@ class EHM:
             for child in children:
                 c_i = child.ind
                 ids = list(net.edges[(parent, child)])
-                p_U[p_i] += np.sum(likelihood_matrix[child.layer, ids]*p_U[c_i])
+                p_U[p_i] += np.sum(likelihood_matrix[child.layer, ids] * p_U[c_i])
 
         # Compute p_DT - Eq. (21) of [EHM1]
         p_DT = np.zeros((num_detections, num_nodes))
@@ -149,7 +150,7 @@ class EHM:
         for node in net.nodes[1:]:
             n_i = node.ind
             for j in range(num_detections):
-                p_T[j, n_i] = p_U[n_i]*likelihood_matrix[node.layer, j]*p_DT[j, n_i]
+                p_T[j, n_i] = p_U[n_i] * likelihood_matrix[node.layer, j] * p_DT[j, n_i]
 
         # Compute association weights - Eq. (15) of [EHM1]
         a_matrix = np.zeros(likelihood_matrix.shape)
@@ -158,7 +159,7 @@ class EHM:
             for j in range(num_detections):
                 a_matrix[i, j] = np.sum(p_T[j, node_inds])
             # Normalise
-            a_matrix[i, :] = a_matrix[i, :]/np.sum(a_matrix[i, :])
+            a_matrix[i, :] = a_matrix[i, :] / np.sum(a_matrix[i, :])
 
         return a_matrix
 
@@ -354,7 +355,10 @@ class EHM2(EHM):
                 v_detections_m1 = (v_detections - parent.identity) | {0}
 
                 # Get leaf child, if any
-                child = next((node for node in net.nodes if node.layer == layer and node.subnet == tree.subtree), None)
+                try:
+                    child = next(iter(net.nodes_per_layer_subnet[(layer, tree.subtree)]))
+                except (KeyError, StopIteration):
+                    child = None
 
                 # Iterate over valid detections
                 for j in v_detections_m1:
@@ -484,6 +488,9 @@ class EHM2(EHM):
         nodes_forwards = net.nodes_forward
         nodes_backwards = list(reversed(nodes_forwards))
 
+        # Precompute valid detections per track
+        v_detections_per_track = [set(np.flatnonzero(row)) for row in net.validation_matrix]
+
         # Compute w_B (Backward-pass) - Eq. (47) of [EHM2]
         w_B = np.zeros((num_nodes,))
         for parent in nodes_backwards:
@@ -495,7 +502,7 @@ class EHM2(EHM):
                 continue
 
             weight = 0
-            v_detections = set(np.flatnonzero(net.validation_matrix[parent.track, :])) - parent.identity
+            v_detections = v_detections_per_track[parent.track] - parent.identity
             for det_ind in v_detections:
                 v_children = net.children_per_detection[(parent, det_ind)]
                 weight_det = likelihood_matrix[parent.track, det_ind]
@@ -513,22 +520,22 @@ class EHM2(EHM):
             if parent.track is None:
                 continue
             p_i = parent.ind
-            v_detections = set(np.flatnonzero(net.validation_matrix[parent.track, :])) - parent.identity
+            v_detections = v_detections_per_track[parent.track] - parent.identity
             for det_ind in v_detections:
                 v_children = net.children_per_detection[(parent, det_ind)]
                 for child in v_children:
                     if child.track is None:
                         continue
                     c_i = child.ind
-                    sibling_inds = [c.ind for c in v_children if not c == child]
-                    sibling_weight = np.prod([w_B[s_i] for s_i in sibling_inds])
-                    weight = likelihood_matrix[parent.track, det_ind]*w_F[p_i]*sibling_weight
+                    sibling_inds = list({c.ind for c in v_children} - {child.ind})
+                    sibling_weight = np.prod(w_B[sibling_inds]) if len(sibling_inds) > 0 else 1
+                    weight = likelihood_matrix[parent.track, det_ind] * w_F[p_i] * sibling_weight
                     w_F[c_i] += weight
 
         # Compute association probs - Eq. (46) of [EHM2]
         a_matrix = np.zeros(likelihood_matrix.shape)
         for track in range(num_tracks):
-            v_detections = set(np.flatnonzero(net.validation_matrix[track, :]))
+            v_detections = v_detections_per_track[track]
             for detection in v_detections:
                 for parent in net.nodes_per_track[track]:
                     try:

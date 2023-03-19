@@ -281,7 +281,8 @@ class EHM2(EHM):
         net = EHMNet([root_node], validation_matrix=validation_matrix)
 
         # Recursively construct next layers
-        cls._construct_net_layer(net, tree, 1)
+        # cls._construct_net_layer(net, tree, 1)
+        cls._construct_net_layer2(net, tree)
 
         # Compute and cache nodes per track
         for i in range(num_tracks):
@@ -373,9 +374,99 @@ class EHM2(EHM):
                         # Simply add new edge or update existing one
                         net.add_edge(parent, child, j)
 
+        a=2
         # Create new layers for each sub-tree
         for i, child_tree in enumerate(tree.children):
             cls._construct_net_layer(net, child_tree, layer + 1)
+
+    @classmethod
+    def _construct_net_layer2(cls, net, tree):
+
+        for parent_tree_node in tree.nodes:
+            # Get list of nodes in previous layer of subtree
+            try:
+                parent_nodes = net.nodes_per_layer_subnet[(parent_tree_node.layer,
+                                                           parent_tree_node.subtree)]
+            except KeyError:
+                parent_nodes = set()
+
+            v_detections = set(np.flatnonzero(net.validation_matrix[parent_tree_node.track, :]))
+
+            # If this is not an end layer
+            if parent_tree_node.children:
+
+                # Process each subtree
+                for child_tree_node in parent_tree_node.children:
+
+                    # Compute accumulated measurements up to next layer (i+1)
+                    acc = {0} | child_tree_node.detections
+
+                    # List of nodes in current layer
+                    children_per_identity = dict()
+
+                    # For all nodes in previous layer
+                    for parent in parent_nodes:
+
+                        # Exclude any detections already considered by parent nodes (always include null)
+                        v_detections_m1 = (v_detections - parent.identity) | {0}
+
+                        # Iterate over valid detections
+                        for j in v_detections_m1:
+
+                            # Identity
+                            identity = acc.intersection(parent.identity | {j}) - {0}
+
+                            # Find valid nodes in current layer that have the same identity
+                            try:
+                                v_children = children_per_identity[tuple(sorted(identity))]
+                            except KeyError:
+                                v_children = set()
+
+                            # If layer is empty or no valid nodes exist, add new node
+                            if not len(v_children):
+                                # Create new node
+                                child = EHM2NetNode(layer=child_tree_node.layer,
+                                                    subnet=child_tree_node.subtree,
+                                                    track=child_tree_node.track,
+                                                    identity=identity)
+                                # Add node to net
+                                net.add_node(child, parent, j)
+                                # Add node to list of child nodes
+                                try:
+                                    children_per_identity[tuple(sorted(child.identity))].add(child)
+                                except KeyError:
+                                    children_per_identity[tuple(sorted(child.identity))] = {child}
+                            else:
+                                # Simply add new edge or update existing one
+                                for child in v_children:
+                                    net.add_edge(parent, child, j)
+            else:
+                # For all nodes in previous layer
+                for parent in parent_nodes:
+
+                    # Exclude any detections already considered by parent nodes (always include null)
+                    v_detections_m1 = (v_detections - parent.identity) | {0}
+
+                    # Get leaf child, if any
+                    try:
+                        child = next(iter(net.nodes_per_layer_subnet[(parent_tree_node.layer + 1,
+                                                                      parent_tree_node.subtree)]))
+                    except (KeyError, StopIteration):
+                        child = None
+
+                    # Iterate over valid detections
+                    for j in v_detections_m1:
+
+                        # If layer is empty or no valid node exist, add new node
+                        if not child:
+                            # Create new node
+                            child = EHM2NetNode(layer=parent_tree_node.layer + 1,
+                                                subnet=parent_tree_node.subtree)
+                            # Add node to net
+                            net.add_node(child, parent, j)
+                        else:
+                            # Simply add new edge or update existing one
+                            net.add_edge(parent, child, j)
 
     @staticmethod
     def construct_tree(validation_matrix):
@@ -454,6 +545,21 @@ class EHM2(EHM):
             raise ValueError('The provided validation matrix results in multiple clusters of tracks')
 
         tree = trees[0]
+
+        stack = [tree]
+        tree.layer = 0
+        tree.detections_forward = set(np.flatnonzero(validation_matrix[tree.track, :])) - {0}
+        layer = 1
+        while stack:
+            node = stack.pop()
+            for child in node.children:
+                child.layer = node.layer + 1
+                v_detections = set(np.flatnonzero(validation_matrix[child.track, :])) - {0}
+                detections_forward = v_detections
+                detections_forward |= node.detections_forward
+                child.detections_forward = detections_forward
+                stack.append(child)
+            layer += 1
 
         # Reverse subtree indices
         max_subtree_ind = tree.subtree

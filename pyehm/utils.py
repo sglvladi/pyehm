@@ -89,6 +89,7 @@ class EHMNet:
         self.children_per_detection = dict()
         self.nodes_per_track = dict()
         self.nodes_per_layer_subnet = dict()
+        self.nodes_per_layer = dict()
         self.nodes_per_identity = dict()
 
         self._parents = dict()
@@ -107,8 +108,10 @@ class EHMNet:
             # Create layer-subnet-node look-up
             if isinstance(node, EHM2NetNode):
                 try:
+                    self.nodes_per_layer[node.layer].add(node)
                     self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
                 except KeyError:
+                    self.nodes_per_layer[node.layer] = {node}
                     self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
 
     @property
@@ -188,8 +191,10 @@ class EHMNet:
                 self._num_layers = node.layer + 1
             # Create layer-subnet-node look-up
             try:
+                self.nodes_per_layer[node.layer].add(node)
                 self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
             except KeyError:
+                self.nodes_per_layer[node.layer] = {node}
                 self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
         else:
             if node.layer + 2 > self._num_layers:
@@ -437,7 +442,7 @@ def gen_clusters(validation_matrix, likelihood_matrix=None):
     clusters = list()
 
     # List of tracks gated for each detection
-    v_lists = [np.flatnonzero(validation_matrix_true[:, detection]) for detection in range(num_detections)]
+    v_lists = [np.flatnonzero(validation_matrix_true[:, detection]).tolist() for detection in range(num_detections)]
 
     # Get clusters of tracks sharing common detections
     G = to_graph(v_lists)

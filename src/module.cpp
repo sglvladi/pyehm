@@ -88,7 +88,7 @@ PYBIND11_MODULE(_pyehm, m) {
 		.def_readwrite("subtree", &EHM2Tree::subtree)
 		.def_property_readonly("depth", &EHM2Tree::getDepth);
 	py::class_<Cluster, ClusterPtr>(utils_m, "Cluster")
-		.def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXi, Eigen::MatrixXd>(), "tracks"_a, "detections"_a, "validation_matrix"_a = Eigen::MatrixXi::Zero(0, 0), "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
+		.def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXi, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "validation_matrix"_a = Eigen::MatrixXi::Zero(0, 0), "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
 		.def_readwrite("tracks", &Cluster::tracks)
 		.def_readwrite("detections", &Cluster::detections)
 		.def_readwrite("validation_matrix", &Cluster::validation_matrix)

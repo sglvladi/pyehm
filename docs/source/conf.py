@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../'))
 
+from pyehm import __version__
 
 # -- Project information -----------------------------------------------------
 
@@ -24,7 +25,7 @@ copyright = '2021, Lyudmil Vladimirov'
 author = 'Lyudmil Vladimirov'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1b1'
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------

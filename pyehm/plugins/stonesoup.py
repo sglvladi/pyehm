@@ -6,7 +6,7 @@ from stonesoup.types.hypothesis import SingleProbabilityHypothesis
 from stonesoup.types.multihypothesis import MultipleHypothesis
 from stonesoup.types.numeric import Probability
 
-from ..core import EHM, EHM2
+from pyehm.core import EHM, EHM2
 
 
 class JPDAWithEHM(JPDA):
@@ -92,7 +92,7 @@ class JPDAWithEHM(JPDA):
                     likelihood_matrix[i, j + 1] = hyp.weight
         validation_matrix = likelihood_matrix > 0
 
-        return validation_matrix, likelihood_matrix
+        return validation_matrix.astype(int), likelihood_matrix.astype(float)
 
     @classmethod
     def _compute_multi_hypotheses(cls, tracks, detections, hypotheses, time):

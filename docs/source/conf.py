@@ -13,15 +13,16 @@
 import re
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../'))
 
 from pyehm import __version__
+
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'PyEHM'
-copyright = '2021, Lyudmil Vladimirov'
+copyright = '2021-2023, Lyudmil Vladimirov'
 author = 'Lyudmil Vladimirov'
 
 # The full version, including alpha/beta/rc tags

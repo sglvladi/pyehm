@@ -36,8 +36,8 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
             if (validation_matrix(layer, detection) == 1)
             {
                 v_detections.insert(detection);
-			}
-		}
+            }
+        }
         
         // Compute accumulated measurements up to next layer (i+1)
         std::set<int> acc = {};
@@ -47,10 +47,10 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
             {
                 if (validation_matrix(i, detection) == 1)
                 {
-					acc.insert(detection);
-				}
-			}
-		}
+                    acc.insert(detection);
+                }
+            }
+        }
 
         // List of nodes in current layer
         std::map<std::vector<int>, std::set<EHMNetNodePtr>> children_per_identity;
@@ -93,9 +93,9 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
                     }
                 }
 
-			}
-		}
-	}
+            }
+        }
+    }
     return net;
 
 }

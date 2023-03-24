@@ -141,14 +141,14 @@ EHM2NetPtr EHM2::constructNet(const Eigen::MatrixXi& validation_matrix)
 
     // Compute and cache nodes per track
     for (int i = 0; i < num_tracks; i++) {
-		std::set<EHM2NetNodePtr> nodes_per_track;
+        std::set<EHM2NetNodePtr> nodes_per_track;
         for (EHM2NetNodePtr node : net->getNodes()) {
             if (node->track == i) {
-				nodes_per_track.insert(node);
-			}
-		}
-		net->nodes_per_track[i] = nodes_per_track;
-	}
+                nodes_per_track.insert(node);
+            }
+        }
+        net->nodes_per_track[i] = nodes_per_track;
+    }
 
     
     return net;
@@ -166,41 +166,41 @@ Eigen::MatrixXd EHM2::computeAssociationMatrix(const EHM2NetPtr net, const Eigen
     // Precompute valid detections per track
     std::vector<std::set<int>> valid_detections_per_track;
     for (int i = 0; i < num_tracks; i++) {
-		std::set<int> v_detections;
+        std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++) {
             if (net->validation_matrix(i, detection) == 1) {
                 v_detections.insert(detection);
             }
         }
-		valid_detections_per_track.push_back(v_detections);
-	}
+        valid_detections_per_track.push_back(v_detections);
+    }
 
     // Compute w_B (Backward-pass) - Eq. (47) of [EHM2]
     Eigen::VectorXd w_B = Eigen::VectorXd::Zero(num_nodes);
     for (int i = num_nodes - 1; i >= 0; i--) {
-		EHM2NetNodePtr parent = nodes_forward[i];
+        EHM2NetNodePtr parent = nodes_forward[i];
         int p_i = parent->id;
         if (parent->track == -1) {
-			w_B(p_i) = 1;
-		}
+            w_B(p_i) = 1;
+        }
         else {
-			double weight = 0;
+            double weight = 0;
             std::set<int> v_detections_tmp = valid_detections_per_track[parent->track];
             std::set<int> v_detections;
             std::set_difference(v_detections_tmp.begin(), v_detections_tmp.end(), parent->identity.begin(), parent->identity.end(), 
                                 std::inserter(v_detections, v_detections.begin()));
             for (int detection : v_detections) {
-				std::vector<EHM2NetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
+                std::vector<EHM2NetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
                 double weight_det = likelihood_matrix(parent->track, detection);
                 for (EHM2NetNodePtr child : v_children) {
-					int c_i = child->id;
+                    int c_i = child->id;
                     weight_det *= w_B(c_i);
-				}
+                }
                 weight += weight_det;
-			}
-			w_B(p_i) = weight;
-		}
-	}
+            }
+            w_B(p_i) = weight;
+        }
+    }
 
     // Compute w_F (Forward-pass) - Eq. (49) of [EHM2]
     Eigen::VectorXd w_F = Eigen::VectorXd::Zero(num_nodes);
@@ -229,9 +229,9 @@ Eigen::MatrixXd EHM2::computeAssociationMatrix(const EHM2NetPtr net, const Eigen
                 sibling_inds.erase(c_i);
                 double sibling_weight = 1;
                 for (int sibling_ind : sibling_inds) {
-					sibling_weight *= w_B(sibling_ind);
-				}
-				w_F(c_i) += w_F(p_i) * likelihood_matrix(parent->track, detection) * sibling_weight;
+                    sibling_weight *= w_B(sibling_ind);
+                }
+                w_F(c_i) += w_F(p_i) * likelihood_matrix(parent->track, detection) * sibling_weight;
             }
         }
     }
@@ -243,8 +243,8 @@ Eigen::MatrixXd EHM2::computeAssociationMatrix(const EHM2NetPtr net, const Eigen
             for (auto& parent : net->nodes_per_track[track]) {
                 std::vector<EHM2NetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
                 if (v_children.empty()) {
-					continue;
-				}
+                    continue;
+                }
                 double weight = likelihood_matrix(track, detection) * w_F(parent->id);
                 for (auto& child : v_children) {
                     weight *= w_B(child->id);
@@ -316,32 +316,32 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> matched;
         std::vector<int> unmatched;
         for (int j = 0; j < trees.size(); j++) {
-			EHM2TreePtr tree = trees[j];
-			std::set<int> tree_detections = tree->detections;
-			std::set<int> intersection;
-			std::set_intersection(v_detections.begin(), v_detections.end(), tree_detections.begin(), tree_detections.end(), std::inserter(intersection, intersection.begin()));
+            EHM2TreePtr tree = trees[j];
+            std::set<int> tree_detections = tree->detections;
+            std::set<int> intersection;
+            std::set_intersection(v_detections.begin(), v_detections.end(), tree_detections.begin(), tree_detections.end(), std::inserter(intersection, intersection.begin()));
             if (intersection.size() > 0) {
-				// Add the track to the tree
-				matched.push_back(j);
-			}
+                // Add the track to the tree
+                matched.push_back(j);
+            }
             else {
-				unmatched.push_back(j);
-			}
-		}
+                unmatched.push_back(j);
+            }
+        }
 
         std::vector<EHM2TreePtr> children;
         if (matched.size()) {
             for (int j = 0; j < matched.size(); j++) {
-				children.push_back(trees[matched[j]]);
-			}
+                children.push_back(trees[matched[j]]);
+            }
             std::set<int> detections(v_detections.begin(), v_detections.end());
             for (auto& tree : children) {
                 std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
             }
             std::vector<int> subtree_indices;
             for (auto& tree : children) {
-				subtree_indices.push_back(tree->subtree);
-			}
+                subtree_indices.push_back(tree->subtree);
+            }
             int subtree_index = *std::max_element(subtree_indices.begin(), subtree_indices.end());
             EHM2TreePtr tree = std::make_shared<EHM2Tree>(EHM2Tree(i, children, detections, subtree_index));
 
@@ -357,7 +357,7 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             EHM2TreePtr tree = std::make_shared<EHM2Tree>(EHM2Tree(i, children, v_detections, last_subtree_index));
             trees.push_back(tree);
         }
-	}
+    }
 
     // TODO: Add error if trees.size() != 1
 
@@ -368,8 +368,8 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
     std::vector<EHM2TreePtr> nodes = tree->getAllChildren();
     tree->subtree = 0;
     for (auto& node : nodes) {
-		node->subtree = max_subtree_ind - node->subtree;
-	}
+        node->subtree = max_subtree_ind - node->subtree;
+    }
     return tree;
 }
 

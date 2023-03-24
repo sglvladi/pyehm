@@ -17,17 +17,17 @@ typedef std::set<int> EHMNetNodeIdentity;
 class EHMNetNode
 {
 public:
-	int id;
-	int layer;
-	EHMNetNodeIdentity identity;
+    int id;
+    int layer;
+    EHMNetNodeIdentity identity;
 
-	EHMNetNode() = default;
-	EHMNetNode(int layer, EHMNetNodeIdentity identity);
-	EHMNetNode(int layer);
+    EHMNetNode() = default;
+    EHMNetNode(int layer, EHMNetNodeIdentity identity);
+    EHMNetNode(int layer);
 
-	virtual std::string toString() const;
+    virtual std::string toString() const;
 
-	friend std::ostream& operator<<(std::ostream& os, const EHMNetNode& n);
+    friend std::ostream& operator<<(std::ostream& os, const EHMNetNode& n);
 
 };
 

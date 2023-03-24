@@ -11,10 +11,11 @@ __version__ = "2.0a1"
 with open('README.md') as f:
     long_description = f.read()
 
-if platform.system() == 'Windows':
-    cpp_args = ['/std:c++20']
-else:
-    cpp_args = ['-std=c++20']
+cpp_args = []
+# if platform.system() == 'Windows':
+#     cpp_args = ['/std:c++20']
+# else:
+#     cpp_args = ['-std=c++20']
 
 core_sources = sorted(glob("./src/core/*.cpp"))
 net_sources = sorted(glob("./src/net/*.cpp"))

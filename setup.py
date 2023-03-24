@@ -11,11 +11,6 @@ __version__ = "2.0a1"
 with open('README.md') as f:
     long_description = f.read()
 
-cpp_args = []
-# if platform.system() == 'Windows':
-#     cpp_args = ['/std:c++20']
-# else:
-#     cpp_args = ['-std=c++20']
 
 core_sources = sorted(glob("./src/core/*.cpp"))
 net_sources = sorted(glob("./src/net/*.cpp"))
@@ -25,8 +20,7 @@ ext_module = Pybind11Extension(
     '_pyehm',
     sources=['src/module.cpp', 'src/Docstrings.cpp', *core_sources, *net_sources, *utils_sources],
     include_dirs=[r'./src', r'./include'],
-    define_macros=[('VERSION_INFO', __version__)],
-    cxx_std=14
+    define_macros=[('VERSION_INFO', __version__)]
 )
 
 setup(
@@ -61,6 +55,6 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: OS Independent",
     ],
-    # cmdclass={"build_ext": build_ext},
+    cmdclass={"build_ext": build_ext},
     ext_modules=[ext_module],
 )

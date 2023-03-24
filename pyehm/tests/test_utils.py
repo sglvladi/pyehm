@@ -66,5 +66,7 @@ def test_clustering(validation_matrix, val_clusters):
         assert cluster.tracks == val_cluster.tracks
         assert cluster.detections == val_cluster.detections
         if len(cluster.detections):
-            assert np.array_equal(cluster.validation_matrix, validation_matrix[cluster.tracks, :][:, cluster.detections])
-            assert np.array_equal(cluster.likelihood_matrix, likelihood_matrix[cluster.tracks, :][:, cluster.detections])
+            assert np.array_equal(cluster.validation_matrix,
+                                  validation_matrix[cluster.tracks, :][:, cluster.detections])
+            assert np.array_equal(cluster.likelihood_matrix,
+                                  likelihood_matrix[cluster.tracks, :][:, cluster.detections])

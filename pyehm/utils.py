@@ -2,8 +2,8 @@ from typing import Union
 
 import networkx as nx
 
-from _pyehm.utils import *
-from .net import EHMNet, EHM2Net, EHMNetNode, EHM2NetNode, EHM2Tree
+from _pyehm.utils import Cluster, gen_clusters  # noqa: F401
+from .net import EHMNet, EHM2Net, EHM2Tree
 
 
 def to_nx_graph(obj: Union[EHMNet, EHM2Net, EHM2Tree]) -> nx.Graph:

@@ -13,30 +13,50 @@ The interfaces of these classes are documented below.
 
 .. autoclass:: pyehm.core.EHM2
     :members:
-    :show-inheritance:
-    :inherited-members:
+
+Net API
+-------
+The :mod:`pyehm.net` module contains classes that implement the structures (nets, nodes, trees) constructed by the
+:class:`~.EHM` and :class:`~.EHM2` classes.
+
+.. autoclass:: pyehm.net.EHMNetNode
+    :members:
+
+.. autoclass:: pyehm.net.EHM2NetNode
+    :members:
+
+.. autoclass:: pyehm.net.EHMNet
+    :members:
+
+.. autoclass:: pyehm.net.EHM2Net
+    :members:
+
+.. autoclass:: pyehm.net.EHM2Tree
+    :members:
 
 Utils API
 ---------
-The :mod:`pyehm.utils` module contains helper classes and functions used by :mod:`pyehm.core`.
-
-.. autoclass:: pyehm.utils.EHMNetNode
-    :members:
-
-.. autoclass:: pyehm.utils.EHM2NetNode
-    :members:
-    :show-inheritance:
-
-.. autoclass:: pyehm.utils.EHMNet
-    :members:
-
-.. autoclass:: pyehm.utils.EHM2Tree
-    :members:
+The :mod:`pyehm.utils` module contains helper classes and functions.
 
 .. autoclass:: pyehm.utils.Cluster
     :members:
 
 .. autofunction:: pyehm.utils.gen_clusters
+
+.. autofunction:: pyehm.utils.to_nx_graph
+
+Plotting API
+------------
+The :mod:`pyehm.plot` module contains helper functions for plotting the nets and trees constructed by the
+:class:`~.EHM` and :class:`~.EHM2` classes.
+
+.. warning::
+    The plotting functions require `Graphviz <https://graphviz.org/>`_ to be installed and on the ``PATH``.
+
+.. autofunction:: pyehm.plotting.plot_net
+
+.. autofunction:: pyehm.plotting.plot_tree
+
 
 
 Plugins

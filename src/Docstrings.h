@@ -6,7 +6,9 @@ namespace docstrings
 
 	std::string EHMNetNode();
 	std::string EHM2NetNode();
+
 	std::string EHMNet();
+	std::string EHMNet___init__();
 	std::string EHMNet_num_layers();
 	std::string EHMNet_num_nodes();
 	std::string EHMNet_root();
@@ -17,14 +19,22 @@ namespace docstrings
 	std::string EHMNet_get_edges();
 	std::string EHMNet_add_node();
 	std::string EHMNet_add_edge();
+
 	std::string EHM2Net();
 	std::string EHM2Net_num_layers();
 	std::string EHM2Net_num_nodes();
 	std::string EHM2Net_root();
 	std::string EHM2Net_nodes();
 	std::string EHM2Net_nodes_forward();
+	std::string EHM2Net_nodes_per_track();
 	std::string EHM2Net_add_node();
 	std::string EHM2Net_add_edge();
 	std::string EHM2Net_get_nodes_per_layer_subnet();
+	std::string EHM2Net_get_children_per_detection();
+
+	std::string EHM2Tree();
+	std::string EHM2Tree_depth();
+
+
 
 }

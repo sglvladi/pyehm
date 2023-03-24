@@ -2,7 +2,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 EHM2Tree::EHM2Tree(int track, std::vector<EHM2TreePtr> children, EHMNetNodeIdentity detections, int subtree)

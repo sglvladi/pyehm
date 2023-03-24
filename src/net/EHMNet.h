@@ -10,7 +10,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 template <typename T> 

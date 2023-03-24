@@ -2,8 +2,8 @@
 #include <numeric>
 #include <stack>
 
-#include "../utils/EHM2Tree.h"
-#include "../utils/EHM2Net.h"
+#include "../net/EHM2Tree.h"
+#include "../net/EHM2Net.h"
 #include "../utils/Utils.h"
 #include "../utils/Cluster.h"
 
@@ -13,6 +13,7 @@ namespace core
 {
 
 using namespace ehm::utils;
+using namespace ehm::net;
 
 class EHM2
 {

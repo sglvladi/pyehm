@@ -2,7 +2,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 EHM2Net::EHM2Net(const EHM2NetNodePtr root, const Eigen::MatrixXi& validation_matrix)

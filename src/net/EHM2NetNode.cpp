@@ -2,7 +2,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 EHM2NetNode::EHM2NetNode(int layer, int track, int subnet, EHMNetNodeIdentity identity)

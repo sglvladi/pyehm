@@ -9,7 +9,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 typedef std::set<int> EHMNetNodeIdentity;

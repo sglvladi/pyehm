@@ -1,7 +1,7 @@
 #pragma once
 #include<numeric>
 
-#include "../utils/EHMNet.h"
+#include "../net/EHMNet.h"
 #include "../utils/Utils.h"
 #include "../utils/Cluster.h"
 
@@ -12,6 +12,7 @@ namespace core
 {
 
 using namespace ehm::utils;
+using namespace ehm::net;
 
 class EHM
 {

@@ -2,11 +2,11 @@
 #include <unordered_map>
 #include "EHMNet.h"
 #include "EHM2NetNode.h"
-#include "Utils.h"
+#include "../utils/Utils.h"
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 class EHM2Net : public EHMNetBase<EHM2NetNodePtr>

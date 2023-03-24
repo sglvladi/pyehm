@@ -8,7 +8,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 class EHM2Tree: public std::enable_shared_from_this<EHM2Tree>

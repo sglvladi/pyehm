@@ -19,28 +19,28 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 using namespace ehm::core;
 using namespace ehm::utils;
+using namespace ehm::net;
 
 
 PYBIND11_MODULE(_pyehm, m) {
 
+	py::options options;
+	options.disable_function_signatures();
+
     // Submodules
 	auto utils_m = m.def_submodule("utils");
+	auto net_m = m.def_submodule("net");
 	auto core_m = m.def_submodule("core");
 
-
-    // Class definitions
-    auto pyEHMNetNode = py::class_<EHMNetNode, EHMNetNodePtr>(utils_m, "EHMNetNode", docstrings::EHMNetNode().c_str());
-    auto pyEHM2NetNode = py::class_<EHM2NetNode, EHM2NetNodePtr>(utils_m, "EHM2NetNode", docstrings::EHM2NetNode().c_str());
-
 	// Nodes
-	pyEHMNetNode
+	py::class_<EHMNetNode, EHMNetNodePtr>(net_m, "EHMNetNode", docstrings::EHMNetNode().c_str())
 		.def(py::init<int, EHMNetNodeIdentity>(), "layer"_a, "identity"_a = EHMNetNodeIdentity())
 		.def_readwrite("id", &EHMNetNode::id)
 		.def_readwrite("layer", &EHMNetNode::layer)
 		.def_readwrite("identity", &EHMNetNode::identity)
 		.def("__str__", &EHMNetNode::toString)
 		.def("__repr__", &EHMNetNode::toString);
-	pyEHM2NetNode
+	py::class_<EHM2NetNode, EHM2NetNodePtr>(net_m, "EHM2NetNode", docstrings::EHM2NetNode().c_str())
 		.def(py::init<int, int, int, EHMNetNodeIdentity>(), "layer"_a, "track"_a = -1, "subnet"_a = 0, "identity"_a = EHMNetNodeIdentity())
 		.def_readwrite("id", &EHM2NetNode::id)
 		.def_readwrite("layer", &EHM2NetNode::layer)
@@ -51,8 +51,8 @@ PYBIND11_MODULE(_pyehm, m) {
 		.def("__repr__", &EHM2NetNode::toString);
 
 	// Nets
-	py::class_<EHMNet, EHMNetPtr>(utils_m, "EHMNet", docstrings::EHMNet().c_str())
-		.def(py::init<const EHMNetNodePtr, const Eigen::MatrixXi&>(), "root"_a, "validation_matrix"_a)
+	py::class_<EHMNet, EHMNetPtr>(net_m, "EHMNet", docstrings::EHMNet().c_str())
+		.def(py::init<const EHMNetNodePtr, const Eigen::MatrixXi&>(), "root"_a, "validation_matrix"_a, docstrings::EHMNet___init__().c_str())
 		.def_readonly("validation_matrix", &EHMNet::validation_matrix)
 		.def_property_readonly("num_layers", &EHMNet::getNumLayers, docstrings::EHMNet_num_layers().c_str())
 		.def_property_readonly("num_nodes", &EHMNet::getNumNodes, docstrings::EHMNet_num_nodes().c_str())
@@ -62,10 +62,10 @@ PYBIND11_MODULE(_pyehm, m) {
 		.def("get_parents", &EHMNet::getParents, docstrings::EHMNet_get_parents().c_str())
 		.def("get_children", &EHMNet::getChildren, docstrings::EHMNet_get_children().c_str())
 		.def("get_edges", &EHMNet::getEdges, docstrings::EHMNet_get_edges().c_str())
-		.def("add_node", &EHMNet::addNode, docstrings::EHMNet_add_node().c_str())
-		.def("add_edge", &EHMNet::addEdge, docstrings::EHMNet_add_edge().c_str());
+		.def("add_node", &EHMNet::addNode, "node"_a, "parent"_a, "detection"_a, docstrings::EHMNet_add_node().c_str())
+		.def("add_edge", &EHMNet::addEdge, "parent"_a, "child"_a, "detection"_a, docstrings::EHMNet_add_edge().c_str());
 
-	py::class_<EHM2Net, EHM2NetPtr>(utils_m, "EHM2Net")
+	py::class_<EHM2Net, EHM2NetPtr>(net_m, "EHM2Net", docstrings::EHM2Net().c_str())
 		.def(py::init<const EHM2NetNodePtr, const Eigen::MatrixXi&>(), "root"_a, "validation_matrix"_a)
 		.def_readonly("validation_matrix", &EHM2Net::validation_matrix)
 		.def_property_readonly("num_layers", &EHM2Net::getNumLayers, docstrings::EHM2Net_num_layers().c_str())
@@ -73,20 +73,21 @@ PYBIND11_MODULE(_pyehm, m) {
 		.def_property_readonly("root", &EHM2Net::getRoot, docstrings::EHM2Net_root().c_str())
 		.def_property_readonly("nodes", &EHM2Net::getNodes, docstrings::EHM2Net_nodes().c_str())
 		.def_property_readonly("nodes_forward", &EHM2Net::getNodesForward, docstrings::EHM2Net_nodes_forward().c_str())
-		.def_readonly("nodes_per_track", &EHM2Net::nodes_per_track)
+		.def_readonly("nodes_per_track", &EHM2Net::nodes_per_track, docstrings::EHM2Net_nodes_per_track().c_str())
 		.def("get_nodes_per_layer_subnet", &EHM2Net::getNodesPerLayerSubnet, docstrings::EHM2Net_get_nodes_per_layer_subnet().c_str())
-		.def("get_children_per_detection", &EHM2Net::getChildrenPerDetection)
-		.def("add_node", &EHM2Net::addNode, docstrings::EHM2Net_add_node().c_str())
-		.def("add_edge", &EHM2Net::addEdge, docstrings::EHM2Net_add_edge().c_str());
+		.def("get_children_per_detection", &EHM2Net::getChildrenPerDetection, docstrings::EHM2Net_get_children_per_detection().c_str())
+		.def("add_node", &EHM2Net::addNode, "node"_a, "parent"_a, "detection"_a, docstrings::EHM2Net_add_node().c_str())
+		.def("add_edge", &EHM2Net::addEdge, "parent"_a, "child"_a, "detection"_a, docstrings::EHM2Net_add_edge().c_str());
 
-	// Utils
-	py::class_<EHM2Tree, EHM2TreePtr>(utils_m, "EHM2Tree")
+	py::class_<EHM2Tree, EHM2TreePtr>(net_m, "EHM2Tree", docstrings::EHM2Tree().c_str())
 		.def(py::init<int, std::vector<EHM2TreePtr>, EHMNetNodeIdentity, int>(), "track"_a, "childred"_a, "detections"_a, "subtree"_a)
 		.def_readwrite("track", &EHM2Tree::track)
 		.def_readwrite("children", &EHM2Tree::children)
 		.def_readwrite("detections", &EHM2Tree::detections)
 		.def_readwrite("subtree", &EHM2Tree::subtree)
-		.def_property_readonly("depth", &EHM2Tree::getDepth);
+		.def_property_readonly("depth", &EHM2Tree::getDepth, docstrings::EHM2Tree_depth().c_str());
+
+	// Utils
 	py::class_<Cluster, ClusterPtr>(utils_m, "Cluster")
 		.def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXi, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "validation_matrix"_a = Eigen::MatrixXi::Zero(0, 0), "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
 		.def_readwrite("tracks", &Cluster::tracks)

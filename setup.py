@@ -17,11 +17,12 @@ else:
     cpp_args = ['-std=c++20']
 
 core_sources = sorted(glob("./src/core/*.cpp"))
+net_sources = sorted(glob("./src/net/*.cpp"))
 utils_sources = sorted(glob("./src/utils/*.cpp"))
 
 ext_module = Pybind11Extension(
     '_pyehm',
-    sources=['src/module.cpp', 'src/Docstrings.cpp', *core_sources, *utils_sources],
+    sources=['src/module.cpp', 'src/Docstrings.cpp', *core_sources, *net_sources, *utils_sources],
     include_dirs=[r'./src', r'./include'],
     language='c++',
     extra_compile_args=cpp_args,

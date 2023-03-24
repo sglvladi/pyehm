@@ -3,7 +3,7 @@
 
 namespace ehm
 {
-namespace utils
+namespace net
 {
 
 class EHM2NetNode : public EHMNetNode

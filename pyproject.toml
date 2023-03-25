@@ -5,3 +5,4 @@ build-backend = "setuptools.build_meta"
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "pytest {project}/pyehm/tests"
+test-skip = "*-win32"   # skip 32-bit Windows: Scipy fails to build

@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pyehm", "pyehm.vcxproj", "{8F558650-7C8F-469E-9BA9-8E92F6B3D921}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpp_test", "cpp_test\cpp_test.vcxproj", "{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Python|x64 = Debug Python|x64
+		Debug Python|x86 = Debug Python|x86
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release Python|x64 = Release Python|x64
+		Release Python|x86 = Release Python|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug Python|x64.ActiveCfg = Debug Python|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug Python|x64.Build.0 = Debug Python|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug Python|x86.ActiveCfg = Debug Python|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug Python|x86.Build.0 = Debug Python|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug|x64.ActiveCfg = Debug|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug|x64.Build.0 = Debug|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug|x86.ActiveCfg = Debug|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Debug|x86.Build.0 = Debug|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release Python|x64.ActiveCfg = Release Python|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release Python|x64.Build.0 = Release Python|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release Python|x86.ActiveCfg = Release Python|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release Python|x86.Build.0 = Release Python|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release|x64.ActiveCfg = Release|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release|x64.Build.0 = Release|x64
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release|x86.ActiveCfg = Release|Win32
+		{8F558650-7C8F-469E-9BA9-8E92F6B3D921}.Release|x86.Build.0 = Release|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug Python|x64.ActiveCfg = Debug|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug Python|x64.Build.0 = Debug|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug Python|x86.ActiveCfg = Debug|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug Python|x86.Build.0 = Debug|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug|x64.ActiveCfg = Debug|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug|x64.Build.0 = Debug|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug|x86.ActiveCfg = Debug|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Debug|x86.Build.0 = Debug|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release Python|x64.ActiveCfg = Release|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release Python|x64.Build.0 = Release|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release Python|x86.ActiveCfg = Release|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release Python|x86.Build.0 = Release|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release|x64.ActiveCfg = Release|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release|x64.Build.0 = Release|x64
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release|x86.ActiveCfg = Release|Win32
+		{191DEBCA-A285-4744-BFB2-F9D0B8655D4B}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {691CB661-0DBF-4070-A538-E9E44B725CBD}
+	EndGlobalSection
+EndGlobal

@@ -21,6 +21,8 @@ htmlcov/
 
 # IDE
 .idea/
+.vs/
+x64/
 
 # Notebooks
 examples/.ipynb_checkpoints

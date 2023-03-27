@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug Python|Win32">
+      <Configuration>Debug Python</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug Python|x64">
+      <Configuration>Debug Python</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Python|Win32">
+      <Configuration>Release Python</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Python|x64">
+      <Configuration>Release Python</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{8F558650-7C8F-469E-9BA9-8E92F6B3D921}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug Python|Win32'">
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug Python|x64'">
+    <PlatformToolset>v143</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release Python|Win32'">
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release Python|x64'">
+    <PlatformToolset>v143</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Python|x64'">
+    <TargetExt>.pyd</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Python|x64'">
+    <TargetExt>.pyd</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PYEHM_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PYEHM_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Python|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\include;C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\Lib\site-packages\pybind11\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ConformanceMode>true</ConformanceMode>
+      <BasicRuntimeChecks>UninitializedLocalUsageCheck</BasicRuntimeChecks>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Python|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\include;C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\Lib\site-packages\pybind11\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\sglvladi\anaconda3\envs\pyehm-cpp\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\core\EHM.cpp" />
+    <ClCompile Include="src\core\EHM2.cpp" />
+    <ClCompile Include="src\Docstrings.cpp" />
+    <ClCompile Include="src\module.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\utils\Cluster.cpp" />
+    <ClCompile Include="src\net\EHM2Net.cpp" />
+    <ClCompile Include="src\net\EHM2NetNode.cpp" />
+    <ClCompile Include="src\net\EHM2Tree.cpp" />
+    <ClCompile Include="src\net\EHMNet.cpp" />
+    <ClCompile Include="src\net\EHMNetNode.cpp" />
+    <ClCompile Include="src\utils\Utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\eigen\src\cholesky\LDLT.h" />
+    <ClInclude Include="include\eigen\src\cholesky\LLT.h" />
+    <ClInclude Include="include\eigen\src\cholesky\LLT_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\cholmodsupport\CholmodSupport.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\MatrixProduct.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\MatrixProductCommon.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\MatrixProductMMA.h" />
+    <ClInclude Include="include\eigen\src\core\arch\altivec\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx512\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx512\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx512\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx512\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\avx\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\cuda\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\BFloat16.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\ConjHelper.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\GenericPacketMathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\GenericPacketMathFunctionsFwd.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\Half.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\Settings.h" />
+    <ClInclude Include="include\eigen\src\core\arch\default\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\gpu\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\gpu\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\gpu\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\hip\hcc\math_constants.h" />
+    <ClInclude Include="include\eigen\src\core\arch\msa\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\msa\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\msa\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\neon\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\neon\GeneralBlockPanelKernel.h" />
+    <ClInclude Include="include\eigen\src\core\arch\neon\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\neon\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\neon\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sse\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sse\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sse\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sse\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sve\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sve\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sve\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sycl\InteropHeaders.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sycl\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sycl\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sycl\SyclMemoryModel.h" />
+    <ClInclude Include="include\eigen\src\core\arch\sycl\TypeCasting.h" />
+    <ClInclude Include="include\eigen\src\core\arch\zvector\Complex.h" />
+    <ClInclude Include="include\eigen\src\core\arch\zvector\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\arch\zvector\PacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\ArithmeticSequence.h" />
+    <ClInclude Include="include\eigen\src\core\Array.h" />
+    <ClInclude Include="include\eigen\src\core\ArrayBase.h" />
+    <ClInclude Include="include\eigen\src\core\ArrayWrapper.h" />
+    <ClInclude Include="include\eigen\src\core\Assign.h" />
+    <ClInclude Include="include\eigen\src\core\AssignEvaluator.h" />
+    <ClInclude Include="include\eigen\src\core\Assign_MKL.h" />
+    <ClInclude Include="include\eigen\src\core\BandMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\Block.h" />
+    <ClInclude Include="include\eigen\src\core\BooleanRedux.h" />
+    <ClInclude Include="include\eigen\src\core\CommaInitializer.h" />
+    <ClInclude Include="include\eigen\src\core\ConditionEstimator.h" />
+    <ClInclude Include="include\eigen\src\core\CoreEvaluators.h" />
+    <ClInclude Include="include\eigen\src\core\CoreIterators.h" />
+    <ClInclude Include="include\eigen\src\core\CwiseBinaryOp.h" />
+    <ClInclude Include="include\eigen\src\core\CwiseNullaryOp.h" />
+    <ClInclude Include="include\eigen\src\core\CwiseTernaryOp.h" />
+    <ClInclude Include="include\eigen\src\core\CwiseUnaryOp.h" />
+    <ClInclude Include="include\eigen\src\core\CwiseUnaryView.h" />
+    <ClInclude Include="include\eigen\src\core\DenseBase.h" />
+    <ClInclude Include="include\eigen\src\core\DenseCoeffsBase.h" />
+    <ClInclude Include="include\eigen\src\core\DenseStorage.h" />
+    <ClInclude Include="include\eigen\src\core\Diagonal.h" />
+    <ClInclude Include="include\eigen\src\core\DiagonalMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\DiagonalProduct.h" />
+    <ClInclude Include="include\eigen\src\core\Dot.h" />
+    <ClInclude Include="include\eigen\src\core\EigenBase.h" />
+    <ClInclude Include="include\eigen\src\core\ForceAlignedAccess.h" />
+    <ClInclude Include="include\eigen\src\core\functors\AssignmentFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\functors\BinaryFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\functors\NullaryFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\functors\StlFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\functors\TernaryFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\functors\UnaryFunctors.h" />
+    <ClInclude Include="include\eigen\src\core\Fuzzy.h" />
+    <ClInclude Include="include\eigen\src\core\GeneralProduct.h" />
+    <ClInclude Include="include\eigen\src\core\GenericPacketMath.h" />
+    <ClInclude Include="include\eigen\src\core\GlobalFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\IndexedView.h" />
+    <ClInclude Include="include\eigen\src\core\Inverse.h" />
+    <ClInclude Include="include\eigen\src\core\IO.h" />
+    <ClInclude Include="include\eigen\src\core\Map.h" />
+    <ClInclude Include="include\eigen\src\core\MapBase.h" />
+    <ClInclude Include="include\eigen\src\core\MathFunctions.h" />
+    <ClInclude Include="include\eigen\src\core\MathFunctionsImpl.h" />
+    <ClInclude Include="include\eigen\src\core\Matrix.h" />
+    <ClInclude Include="include\eigen\src\core\MatrixBase.h" />
+    <ClInclude Include="include\eigen\src\core\NestByValue.h" />
+    <ClInclude Include="include\eigen\src\core\NoAlias.h" />
+    <ClInclude Include="include\eigen\src\core\NumTraits.h" />
+    <ClInclude Include="include\eigen\src\core\PartialReduxEvaluator.h" />
+    <ClInclude Include="include\eigen\src\core\PermutationMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\PlainObjectBase.h" />
+    <ClInclude Include="include\eigen\src\core\Product.h" />
+    <ClInclude Include="include\eigen\src\core\ProductEvaluators.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralBlockPanelKernel.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixMatrixTriangular.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixMatrixTriangular_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixMatrix_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixVector.h" />
+    <ClInclude Include="include\eigen\src\core\products\GeneralMatrixVector_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\Parallelizer.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointMatrixMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointMatrixMatrix_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointMatrixVector.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointMatrixVector_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointProduct.h" />
+    <ClInclude Include="include\eigen\src\core\products\SelfadjointRank2Update.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularMatrixMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularMatrixMatrix_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularMatrixVector.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularMatrixVector_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularSolverMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularSolverMatrix_BLAS.h" />
+    <ClInclude Include="include\eigen\src\core\products\TriangularSolverVector.h" />
+    <ClInclude Include="include\eigen\src\core\Random.h" />
+    <ClInclude Include="include\eigen\src\core\Redux.h" />
+    <ClInclude Include="include\eigen\src\core\Ref.h" />
+    <ClInclude Include="include\eigen\src\core\Replicate.h" />
+    <ClInclude Include="include\eigen\src\core\Reshaped.h" />
+    <ClInclude Include="include\eigen\src\core\ReturnByValue.h" />
+    <ClInclude Include="include\eigen\src\core\Reverse.h" />
+    <ClInclude Include="include\eigen\src\core\Select.h" />
+    <ClInclude Include="include\eigen\src\core\SelfAdjointView.h" />
+    <ClInclude Include="include\eigen\src\core\SelfCwiseBinaryOp.h" />
+    <ClInclude Include="include\eigen\src\core\Solve.h" />
+    <ClInclude Include="include\eigen\src\core\SolverBase.h" />
+    <ClInclude Include="include\eigen\src\core\SolveTriangular.h" />
+    <ClInclude Include="include\eigen\src\core\StableNorm.h" />
+    <ClInclude Include="include\eigen\src\core\StlIterators.h" />
+    <ClInclude Include="include\eigen\src\core\Stride.h" />
+    <ClInclude Include="include\eigen\src\core\Swap.h" />
+    <ClInclude Include="include\eigen\src\core\Transpose.h" />
+    <ClInclude Include="include\eigen\src\core\Transpositions.h" />
+    <ClInclude Include="include\eigen\src\core\TriangularMatrix.h" />
+    <ClInclude Include="include\eigen\src\core\util\BlasUtil.h" />
+    <ClInclude Include="include\eigen\src\core\util\ConfigureVectorization.h" />
+    <ClInclude Include="include\eigen\src\core\util\Constants.h" />
+    <ClInclude Include="include\eigen\src\core\util\DisableStupidWarnings.h" />
+    <ClInclude Include="include\eigen\src\core\util\ForwardDeclarations.h" />
+    <ClInclude Include="include\eigen\src\core\util\IndexedViewHelper.h" />
+    <ClInclude Include="include\eigen\src\core\util\IntegralConstant.h" />
+    <ClInclude Include="include\eigen\src\core\util\Macros.h" />
+    <ClInclude Include="include\eigen\src\core\util\Memory.h" />
+    <ClInclude Include="include\eigen\src\core\util\Meta.h" />
+    <ClInclude Include="include\eigen\src\core\util\MKL_support.h" />
+    <ClInclude Include="include\eigen\src\core\util\NonMPL2.h" />
+    <ClInclude Include="include\eigen\src\core\util\ReenableStupidWarnings.h" />
+    <ClInclude Include="include\eigen\src\core\util\ReshapedHelper.h" />
+    <ClInclude Include="include\eigen\src\core\util\StaticAssert.h" />
+    <ClInclude Include="include\eigen\src\core\util\SymbolicIndex.h" />
+    <ClInclude Include="include\eigen\src\core\util\XprHelper.h" />
+    <ClInclude Include="include\eigen\src\core\VectorBlock.h" />
+    <ClInclude Include="include\eigen\src\core\VectorwiseOp.h" />
+    <ClInclude Include="include\eigen\src\core\Visitor.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\ComplexEigenSolver.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\ComplexSchur.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\ComplexSchur_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\EigenSolver.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\GeneralizedEigenSolver.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\GeneralizedSelfAdjointEigenSolver.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\HessenbergDecomposition.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\MatrixBaseEigenvalues.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\RealQZ.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\RealSchur.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\RealSchur_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\SelfAdjointEigenSolver.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\SelfAdjointEigenSolver_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\eigenvalues\Tridiagonalization.h" />
+    <ClInclude Include="include\eigen\src\geometry\AlignedBox.h" />
+    <ClInclude Include="include\eigen\src\geometry\AngleAxis.h" />
+    <ClInclude Include="include\eigen\src\geometry\arch\Geometry_SIMD.h" />
+    <ClInclude Include="include\eigen\src\geometry\EulerAngles.h" />
+    <ClInclude Include="include\eigen\src\geometry\Homogeneous.h" />
+    <ClInclude Include="include\eigen\src\geometry\Hyperplane.h" />
+    <ClInclude Include="include\eigen\src\geometry\OrthoMethods.h" />
+    <ClInclude Include="include\eigen\src\geometry\ParametrizedLine.h" />
+    <ClInclude Include="include\eigen\src\geometry\Quaternion.h" />
+    <ClInclude Include="include\eigen\src\geometry\Rotation2D.h" />
+    <ClInclude Include="include\eigen\src\geometry\RotationBase.h" />
+    <ClInclude Include="include\eigen\src\geometry\Scaling.h" />
+    <ClInclude Include="include\eigen\src\geometry\Transform.h" />
+    <ClInclude Include="include\eigen\src\geometry\Translation.h" />
+    <ClInclude Include="include\eigen\src\geometry\Umeyama.h" />
+    <ClInclude Include="include\eigen\src\householder\BlockHouseholder.h" />
+    <ClInclude Include="include\eigen\src\householder\Householder.h" />
+    <ClInclude Include="include\eigen\src\householder\HouseholderSequence.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\BasicPreconditioners.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\BiCGSTAB.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\ConjugateGradient.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\IncompleteCholesky.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\IncompleteLUT.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\IterativeSolverBase.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\LeastSquareConjugateGradient.h" />
+    <ClInclude Include="include\eigen\src\iterativelinearsolvers\SolveWithGuess.h" />
+    <ClInclude Include="include\eigen\src\jacobi\Jacobi.h" />
+    <ClInclude Include="include\eigen\src\klusupport\KLUSupport.h" />
+    <ClInclude Include="include\eigen\src\lu\arch\InverseSize4.h" />
+    <ClInclude Include="include\eigen\src\lu\Determinant.h" />
+    <ClInclude Include="include\eigen\src\lu\FullPivLU.h" />
+    <ClInclude Include="include\eigen\src\lu\InverseImpl.h" />
+    <ClInclude Include="include\eigen\src\lu\PartialPivLU.h" />
+    <ClInclude Include="include\eigen\src\lu\PartialPivLU_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\metissupport\MetisSupport.h" />
+    <ClInclude Include="include\eigen\src\misc\blas.h" />
+    <ClInclude Include="include\eigen\src\misc\Image.h" />
+    <ClInclude Include="include\eigen\src\misc\Kernel.h" />
+    <ClInclude Include="include\eigen\src\misc\lapack.h" />
+    <ClInclude Include="include\eigen\src\misc\lapacke.h" />
+    <ClInclude Include="include\eigen\src\misc\lapacke_mangling.h" />
+    <ClInclude Include="include\eigen\src\misc\RealSvd2x2.h" />
+    <ClInclude Include="include\eigen\src\orderingmethods\Amd.h" />
+    <ClInclude Include="include\eigen\src\orderingmethods\Eigen_Colamd.h" />
+    <ClInclude Include="include\eigen\src\orderingmethods\Ordering.h" />
+    <ClInclude Include="include\eigen\src\pardisosupport\PardisoSupport.h" />
+    <ClInclude Include="include\eigen\src\pastixsupport\PaStiXSupport.h" />
+    <ClInclude Include="include\eigen\src\plugins\ArrayCwiseBinaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\ArrayCwiseUnaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\BlockMethods.h" />
+    <ClInclude Include="include\eigen\src\plugins\CommonCwiseBinaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\CommonCwiseUnaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\IndexedViewMethods.h" />
+    <ClInclude Include="include\eigen\src\plugins\MatrixCwiseBinaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\MatrixCwiseUnaryOps.h" />
+    <ClInclude Include="include\eigen\src\plugins\ReshapedMethods.h" />
+    <ClInclude Include="include\eigen\src\qr\ColPivHouseholderQR.h" />
+    <ClInclude Include="include\eigen\src\qr\ColPivHouseholderQR_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\qr\CompleteOrthogonalDecomposition.h" />
+    <ClInclude Include="include\eigen\src\qr\FullPivHouseholderQR.h" />
+    <ClInclude Include="include\eigen\src\qr\HouseholderQR.h" />
+    <ClInclude Include="include\eigen\src\qr\HouseholderQR_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\sparsecholesky\SimplicialCholesky.h" />
+    <ClInclude Include="include\eigen\src\sparsecholesky\SimplicialCholesky_impl.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\AmbiVector.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\CompressedStorage.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\ConservativeSparseSparseProduct.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\MappedSparseMatrix.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseAssign.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseBlock.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseColEtree.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseCompressedBase.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseCwiseBinaryOp.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseCwiseUnaryOp.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseDenseProduct.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseDiagonalProduct.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseDot.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseFuzzy.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseMap.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseMatrix.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseMatrixBase.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparsePermutation.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseProduct.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseRedux.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseRef.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseSelfAdjointView.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseSolverBase.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseSparseProductWithPruning.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseTranspose.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseTriangularView.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseUtil.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseVector.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\SparseView.h" />
+    <ClInclude Include="include\eigen\src\sparsecore\TriangularSolver.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLUImpl.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_column_bmod.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_column_dfs.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_copy_to_ucol.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_gemm_kernel.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_heap_relax_snode.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_kernel_bmod.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_Memory.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_panel_bmod.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_panel_dfs.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_pivotL.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_pruneL.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_relax_snode.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_Structs.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_SupernodalMatrix.h" />
+    <ClInclude Include="include\eigen\src\sparselu\SparseLU_Utils.h" />
+    <ClInclude Include="include\eigen\src\sparseqr\SparseQR.h" />
+    <ClInclude Include="include\eigen\src\spqrsupport\SuiteSparseQRSupport.h" />
+    <ClInclude Include="include\eigen\src\stlsupport\details.h" />
+    <ClInclude Include="include\eigen\src\stlsupport\StdDeque.h" />
+    <ClInclude Include="include\eigen\src\stlsupport\StdList.h" />
+    <ClInclude Include="include\eigen\src\stlsupport\StdVector.h" />
+    <ClInclude Include="include\eigen\src\superlusupport\SuperLUSupport.h" />
+    <ClInclude Include="include\eigen\src\svd\BDCSVD.h" />
+    <ClInclude Include="include\eigen\src\svd\JacobiSVD.h" />
+    <ClInclude Include="include\eigen\src\svd\JacobiSVD_LAPACKE.h" />
+    <ClInclude Include="include\eigen\src\svd\SVDBase.h" />
+    <ClInclude Include="include\eigen\src\svd\UpperBidiagonalization.h" />
+    <ClInclude Include="include\eigen\src\umfpacksupport\UmfPackSupport.h" />
+    <ClInclude Include="src\core\EHM.h" />
+    <ClInclude Include="src\core\EHM2.h" />
+    <ClInclude Include="src\Docstrings.h" />
+    <ClInclude Include="src\utils\Cluster.h" />
+    <ClInclude Include="src\net\EHM2Net.h" />
+    <ClInclude Include="src\net\EHM2NetNode.h" />
+    <ClInclude Include="src\net\EHM2Tree.h" />
+    <ClInclude Include="src\net\EHMNet.h" />
+    <ClInclude Include="src\net\EHMNetNode.h" />
+    <ClInclude Include="src\utils\Utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="docs\build\auto_examples\basic.html" />
+    <None Include="docs\build\auto_examples\ehm_vs_ehm2_vs_jpda.html" />
+    <None Include="docs\build\auto_examples\index.html" />
+    <None Include="docs\build\auto_examples\sg_execution_times.html" />
+    <None Include="docs\build\auto_examples\stonesoup_plugin.html" />
+    <None Include="docs\build\genindex.html" />
+    <None Include="docs\build\index.html" />
+    <None Include="docs\build\install.html" />
+    <None Include="docs\build\license.html" />
+    <None Include="docs\build\reference.html" />
+    <None Include="docs\build\search.html" />
+    <None Include="docs\build\_modules\index.html" />
+    <None Include="docs\build\_modules\pyehm\core.html" />
+    <None Include="docs\build\_modules\pyehm\plugins\stonesoup.html" />
+    <None Include="docs\build\_modules\pyehm\utils.html" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

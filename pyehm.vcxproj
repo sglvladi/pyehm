@@ -196,11 +196,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\utils\Cluster.cpp" />
-    <ClCompile Include="src\utils\EHM2Net.cpp" />
-    <ClCompile Include="src\utils\EHM2NetNode.cpp" />
-    <ClCompile Include="src\utils\EHM2Tree.cpp" />
-    <ClCompile Include="src\utils\EHMNet.cpp" />
-    <ClCompile Include="src\utils\EHMNetNode.cpp" />
+    <ClCompile Include="src\net\EHM2Net.cpp" />
+    <ClCompile Include="src\net\EHM2NetNode.cpp" />
+    <ClCompile Include="src\net\EHM2Tree.cpp" />
+    <ClCompile Include="src\net\EHMNet.cpp" />
+    <ClCompile Include="src\net\EHMNetNode.cpp" />
     <ClCompile Include="src\utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -515,11 +515,11 @@
     <ClInclude Include="src\core\EHM2.h" />
     <ClInclude Include="src\Docstrings.h" />
     <ClInclude Include="src\utils\Cluster.h" />
-    <ClInclude Include="src\utils\EHM2Net.h" />
-    <ClInclude Include="src\utils\EHM2NetNode.h" />
-    <ClInclude Include="src\utils\EHM2Tree.h" />
-    <ClInclude Include="src\utils\EHMNet.h" />
-    <ClInclude Include="src\utils\EHMNetNode.h" />
+    <ClInclude Include="src\net\EHM2Net.h" />
+    <ClInclude Include="src\net\EHM2NetNode.h" />
+    <ClInclude Include="src\net\EHM2Tree.h" />
+    <ClInclude Include="src\net\EHMNet.h" />
+    <ClInclude Include="src\net\EHMNetNode.h" />
     <ClInclude Include="src\utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>

@@ -30,19 +30,19 @@
     <ClCompile Include="src\utils\Cluster.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\EHM2Net.cpp">
+    <ClCompile Include="src\net\EHM2Net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\EHM2NetNode.cpp">
+    <ClCompile Include="src\net\EHM2NetNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\EHM2Tree.cpp">
+    <ClCompile Include="src\net\EHM2Tree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\EHMNet.cpp">
+    <ClCompile Include="src\net\EHMNet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\EHMNetNode.cpp">
+    <ClCompile Include="src\net\EHMNetNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\Utils.cpp">
@@ -983,19 +983,19 @@
     <ClInclude Include="src\utils\Cluster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\EHM2Net.h">
+    <ClInclude Include="src\net\EHM2Net.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\EHM2NetNode.h">
+    <ClInclude Include="src\net\EHM2NetNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\EHM2Tree.h">
+    <ClInclude Include="src\net\EHM2Tree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\EHMNet.h">
+    <ClInclude Include="src\net\EHMNet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\EHMNetNode.h">
+    <ClInclude Include="src\net\EHMNetNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\Utils.h">

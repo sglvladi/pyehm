@@ -1,3 +1,9 @@
 # -*- coding: utf-8 -*-
 
-__version__ = '2.0a1'
+from pkg_resources import get_distribution, DistributionNotFound
+
+try:
+    __version__ = get_distribution("pyehm").version
+except DistributionNotFound:
+    # package is not installed
+    pass

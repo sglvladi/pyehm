@@ -1,7 +1,14 @@
 [build-system]
-requires = ["setuptools", "wheel", "pybind11"]
+requires = ["setuptools", "wheel", "pybind11", "setuptools_scm[toml]>=7"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools_scm]
+
+# NOTE: The following has been commented out because pytest fails to install scipy for
+# some configurations (e.g. Python 3.9 on Windows 32-bit). This is because the scipy
+# wheel is not available for that configuration, and pip tries to build it from source
+# therefore causing the pipeline to fail. To be fixed in the future.
+# ------------------------------------------------------------------------------------
 #[tool.cibuildwheel]
 #test-requires = "pytest"
 #test-command = "pytest {project}/pyehm/tests"

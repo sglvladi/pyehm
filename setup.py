@@ -1,12 +1,8 @@
 from setuptools import setup, find_packages
+from setuptools_scm import get_version
 from glob import glob
-import platform
-
-# from pyehm import __version__
 
 from pybind11.setup_helpers import Pybind11Extension, build_ext
-
-__version__ = "2.0a1"
 
 with open('README.md') as f:
     long_description = f.read()
@@ -16,16 +12,17 @@ core_sources = sorted(glob("./src/core/*.cpp"))
 net_sources = sorted(glob("./src/net/*.cpp"))
 utils_sources = sorted(glob("./src/utils/*.cpp"))
 
+version = get_version()
+
 ext_module = Pybind11Extension(
     '_pyehm',
     sources=['src/module.cpp', 'src/Docstrings.cpp', *core_sources, *net_sources, *utils_sources],
     include_dirs=[r'./src', r'./include'],
-    define_macros=[('VERSION_INFO', __version__)]
+    define_macros=[('VERSION_INFO',  version)]
 )
 
 setup(
     name='pyehm',
-    version=__version__,
     author="Lyudmil Vladimirov",
     author_email="sglvladi@liverpool.ac.uk",
     maintainer="University of Liverpool",
@@ -46,6 +43,7 @@ setup(
     },
     entry_points={'stonesoup.plugins': 'pyehm = pyehm.plugins.stonesoup'},
     python_requires='>=3.7',
+    use_scm_version=True,
     keywords=['python', 'pyehm', 'ehm'],
     classifiers=[
         "Development Status :: 3 - Alpha",

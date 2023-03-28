@@ -14,8 +14,6 @@ import re
 import os
 import sys
 
-from pyehm import __version__
-
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../'))
 
@@ -25,8 +23,9 @@ project = 'PyEHM'
 copyright = '2021-2023, Lyudmil Vladimirov'
 author = 'Lyudmil Vladimirov'
 
-# The full version, including alpha/beta/rc tags
-release = __version__
+# The full version, including alpha/beta/rc tags.
+from pkg_resources import get_distribution
+version = release = get_distribution('pyehm').version
 
 
 # -- General configuration ---------------------------------------------------

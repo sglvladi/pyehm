@@ -24,7 +24,7 @@ copyright = '2021, Lyudmil Vladimirov'
 author = 'Lyudmil Vladimirov'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1b1'
+release = '1.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',
     'sphinx_gallery.gen_gallery',
+    "sphinxcontrib.jquery",
 ]
 napoleon_google_docstring = False
 

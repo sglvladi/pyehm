@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',
     'sphinx_gallery.gen_gallery',
+    "sphinxcontrib.jquery",
 ]
 napoleon_google_docstring = False
 

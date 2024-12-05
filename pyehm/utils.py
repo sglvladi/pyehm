@@ -84,8 +84,6 @@ class EHMNet:
         self._num_layers = 0
         self.validation_matrix = validation_matrix
         self.edges = edges if edges is not None else dict()
-        self.parents_per_detection = dict()
-        self.children_per_detection = dict()
         self.nodes_per_track = dict()
         self.nodes_per_layer_subnet = dict()
         self.nodes_per_identity = dict()
@@ -106,9 +104,9 @@ class EHMNet:
             # Create layer-subnet-node look-up
             if isinstance(node, EHM2NetNode):
                 try:
-                    self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
+                    self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node.ind)
                 except KeyError:
-                    self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
+                    self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node.ind}
 
     @property
     def root(self) -> Union[EHMNetNode, EHM2NetNode]:
@@ -169,27 +167,21 @@ class EHMNet:
         # Add node to graph
         self.nodes.append(node)
         # Create edge from parent to child
-        self.edges[(parent, node)] = {detection}
-        # Create parent-child-detection look-up
-        self.parents_per_detection[(node, detection)] = {parent}
-        self._parents[node] = {parent}
+        self.edges[(parent.ind, node.ind)] = {detection}
+        self._parents[node.ind] = {parent.ind}
         try:
-            self.children_per_detection[(parent, detection)].add(node)
+            self._children[parent.ind].add(node.ind)
         except KeyError:
-            self.children_per_detection[(parent, detection)] = {node}
-        try:
-            self._children[parent].add(node)
-        except KeyError:
-            self._children[parent] = {node}
+            self._children[parent.ind] = {node.ind}
 
         if isinstance(node, EHM2NetNode):
             if node.layer + 1 > self._num_layers:
                 self._num_layers = node.layer + 1
             # Create layer-subnet-node look-up
             try:
-                self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node)
+                self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node.ind)
             except KeyError:
-                self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node}
+                self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node.ind}
         else:
             if node.layer + 2 > self._num_layers:
                 self._num_layers = node.layer + 2
@@ -207,25 +199,17 @@ class EHMNet:
             Index of measurement representing the parent child relationship.
         """
         try:
-            self.edges[(parent, child)].add(detection)
+            self.edges[(parent.ind, child.ind)].add(detection)
         except KeyError:
-            self.edges[(parent, child)] = {detection}
+            self.edges[(parent.ind, child.ind)] = {detection}
         try:
-            self.parents_per_detection[(child, detection)].add(parent)
+            self._children[parent.ind].add(child.ind)
         except KeyError:
-            self.parents_per_detection[(child, detection)] = {parent}
+            self._children[parent.ind] = {child.ind}
         try:
-            self.children_per_detection[(parent, detection)].add(child)
+            self._parents[child.ind].add(parent.ind)
         except KeyError:
-            self.children_per_detection[(parent, detection)] = {child}
-        try:
-            self._children[parent].add(child)
-        except KeyError:
-            self._children[parent] = {child}
-        try:
-            self._parents[child].add(parent)
-        except KeyError:
-            self._parents[child] = {parent}
+            self._parents[child.ind] = {parent.ind}
 
     def get_parents(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
         """Get the parents of a node.
@@ -241,7 +225,7 @@ class EHMNet:
             List of parent nodes
         """
         try:
-            parents = list(self._parents[node])
+            parents = self.get_nodes(list(self._parents[node.ind]))
         except KeyError:
             parents = []
         return parents  # [edge[0] for edge in self.edges if edge[1] == node]
@@ -260,10 +244,25 @@ class EHMNet:
             List of child nodes
         """
         try:
-            children = list(self._children[node])
+            children = self.get_nodes(list(self._children[node.ind]))
         except KeyError:
             children = []
         return children  # [edge[1] for edge in self.edges if edge[0] == node]
+
+    def get_nodes(self, inds: List[int]):
+        """Get nodes by index
+
+        Parameters
+        ----------
+        inds: :class:`list` of :class:`int`
+            List of node indices
+
+        Returns
+        -------
+        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            List of nodes
+        """
+        return [self.nodes[ind] for ind in inds]
 
     def plot(self, ax: plt.Axes = None, annotate=True):
         """Plot the net.

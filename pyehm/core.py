@@ -64,7 +64,7 @@ class EHM:
 
                     # Find valid nodes in current layer that have the same identity
                     try:
-                        v_children = children_per_identity[tuple(sorted(identity))]
+                        v_children = net.get_nodes(children_per_identity[tuple(sorted(identity))])
                     except KeyError:
                         v_children = set()
 
@@ -76,9 +76,9 @@ class EHM:
                         net.add_node(child, parent, j)
                         # Add node to list of child nodes
                         try:
-                            children_per_identity[tuple(sorted(child.identity))].add(child)
+                            children_per_identity[tuple(sorted(child.identity))].add(child.ind)
                         except KeyError:
-                            children_per_identity[tuple(sorted(child.identity))] = {child}
+                            children_per_identity[tuple(sorted(child.identity))] = {child.ind}
                     else:
                         # Simply add new edge or update existing one
                         for child in v_children:
@@ -116,7 +116,7 @@ class EHM:
             parents = net.get_parents(child)
             for parent in parents:
                 p_i = parent.ind
-                ids = list(net.edges[(parent, child)])
+                ids = list(net.edges[(p_i, c_i)])
                 p_D[c_i] += np.sum(likelihood_matrix[child.layer, ids] * p_D[p_i])
 
         # Compute p_U (Upward-pass) - Eq. (23) of [EHM1]
@@ -127,7 +127,7 @@ class EHM:
             children = net.get_children(parent)
             for child in children:
                 c_i = child.ind
-                ids = list(net.edges[(parent, child)])
+                ids = list(net.edges[(p_i, c_i)])
                 p_U[p_i] += np.sum(likelihood_matrix[child.layer, ids] * p_U[c_i])
 
         # Compute p_DT - Eq. (21) of [EHM1]
@@ -141,7 +141,7 @@ class EHM:
             #         p_DT[j, c_i] += p_D[p_i]
             for parent in net.get_parents(child):
                 p_i = parent.ind
-                for j in net.edges[(parent, child)]:
+                for j in net.edges[(p_i, c_i)]:
                     p_DT[j, c_i] += p_D[p_i]
 
         # Compute p_T - Eq. (20) of [EHM1]
@@ -285,7 +285,7 @@ class EHM2(EHM):
 
         # Compute and cache nodes per track
         for i in range(num_tracks):
-            net.nodes_per_track[i] = [node for node in net.nodes if node.track == i]
+            net.nodes_per_track[i] = [node.ind for node in net.nodes if node.track == i]
 
         return net
 
@@ -294,7 +294,8 @@ class EHM2(EHM):
 
         # Get list of nodes in previous layer of subtree
         try:
-            parent_nodes = net.nodes_per_layer_subnet[(layer - 1, tree.subtree)]
+            parent_nodes_ind = net.nodes_per_layer_subnet[(layer - 1, tree.subtree)]
+            parent_nodes = net.get_nodes(parent_nodes_ind)
         except KeyError:
             parent_nodes = set()
 
@@ -327,7 +328,8 @@ class EHM2(EHM):
 
                         # Find valid nodes in current layer that have the same identity
                         try:
-                            v_children = children_per_identity[tuple(sorted(identity))]
+                            v_children_inds = children_per_identity[tuple(sorted(identity))]
+                            v_children = net.get_nodes(v_children_inds)
                         except KeyError:
                             v_children = set()
 
@@ -340,9 +342,9 @@ class EHM2(EHM):
                             net.add_node(child, parent, j)
                             # Add node to list of child nodes
                             try:
-                                children_per_identity[tuple(sorted(child.identity))].add(child)
+                                children_per_identity[tuple(sorted(child.identity))].add(child.ind)
                             except KeyError:
-                                children_per_identity[tuple(sorted(child.identity))] = {child}
+                                children_per_identity[tuple(sorted(child.identity))] = {child.ind}
                         else:
                             # Simply add new edge or update existing one
                             for child in v_children:
@@ -356,7 +358,7 @@ class EHM2(EHM):
 
                 # Get leaf child, if any
                 try:
-                    child = next(iter(net.nodes_per_layer_subnet[(layer, tree.subtree)]))
+                    child = net.nodes[next(iter(net.nodes_per_layer_subnet[(layer, tree.subtree)]))]
                 except (KeyError, StopIteration):
                     child = None
 
@@ -501,16 +503,16 @@ class EHM2(EHM):
                 w_B[p_i] = 1
                 continue
 
-            weight = 0
             v_detections = v_detections_per_track[parent.track] - parent.identity
-            for det_ind in v_detections:
-                v_children = net.children_per_detection[(parent, det_ind)]
-                weight_det = likelihood_matrix[parent.track, det_ind]
-                for child in v_children:
-                    c_i = child.ind
-                    weight_det *= w_B[c_i]
-                weight += weight_det
-            w_B[p_i] = weight
+            weights_per_det = {det_ind: likelihood_matrix[parent.track, det_ind]
+                               for det_ind in v_detections}
+            children = net.get_children(parent)
+            for child in children:
+                c_i = child.ind
+                v_child_detections = net.edges[(p_i, c_i)].intersection(v_detections)
+                for det_ind in v_child_detections:
+                    weights_per_det[det_ind] *= w_B[c_i]
+            w_B[p_i] = np.sum([w for w in weights_per_det.values()])
 
         # Compute w_F (Forward-pass) - Eq. (49) of [EHM2]
         w_F = np.zeros((num_nodes,))
@@ -521,8 +523,14 @@ class EHM2(EHM):
                 continue
             p_i = parent.ind
             v_detections = v_detections_per_track[parent.track] - parent.identity
+            children = net.get_children(parent)
+            children_per_detection = {
+                det_ind: [child for child in children if det_ind in net.edges[(p_i, child.ind)]]
+                for det_ind in v_detections
+            }
+
             for det_ind in v_detections:
-                v_children = net.children_per_detection[(parent, det_ind)]
+                v_children = children_per_detection[det_ind]
                 for child in v_children:
                     if child.track is None:
                         continue
@@ -536,13 +544,13 @@ class EHM2(EHM):
         a_matrix = np.zeros(likelihood_matrix.shape)
         for track in range(num_tracks):
             v_detections = v_detections_per_track[track]
-            for detection in v_detections:
-                for parent in net.nodes_per_track[track]:
-                    try:
-                        v_children = net.children_per_detection[(parent, detection)]
-                    except KeyError:
-                        continue
+            for parent in net.get_nodes(net.nodes_per_track[track]):
+                for detection in v_detections:
                     weight = likelihood_matrix[track, detection] * w_F[parent.ind]
+                    v_children = [child for child in net.get_children(parent)
+                                  if detection in net.edges[(parent.ind, child.ind)]]
+                    if not v_children:
+                        continue
                     for child in v_children:
                         weight *= w_B[child.ind]
                     a_matrix[track, detection] += weight

@@ -5,33 +5,20 @@ namespace ehm
 namespace utils
 {
 
-void dfs(int vertex, const std::vector<std::vector<int>>& graph, std::vector<bool>& visited, std::vector<int>& component)
+Eigen::MatrixXi getNumIntersectsTable(std::vector<std::pair<std::vector<int>, std::set<int>>> clusters)
 {
-    visited[vertex] = true;  // mark vertex as visited
-    component.push_back(vertex);  // add vertex to current component
-
-    // visit all neighbors of vertex that haven't been visited yet
-    for (int neighbor = 0; neighbor < graph.size(); ++neighbor) {
-        if (graph[vertex][neighbor] && !visited[neighbor]) {
-            dfs(neighbor, graph, visited, component);
-        }
-    }
-}
-
-std::vector<std::vector<int>> findConnectedComponents(const std::vector<std::vector<int>>& graph)
-{
-    std::vector<bool> visited(graph.size(), false);
-    std::vector<std::vector<int>> components;
-
-    for (int vertex = 0; vertex < graph.size(); ++vertex) {
-        if (!visited[vertex]) {
-            std::vector<int> component;
-            dfs(vertex, graph, visited, component);
-            components.push_back(component);
-        }
-    }
-
-    return components;
+	int num_clusters = clusters.size();
+	Eigen::MatrixXi num_intersects_table = Eigen::MatrixXi::Zero(num_clusters, num_clusters);
+	for (int i1 = 0; i1 < num_clusters - 1; i1++)
+	{
+		for (int i2 = i1 + 1; i2 < num_clusters; i2++)
+		{
+			std::vector<int> intersection;
+			std::set_intersection(clusters[i1].second.begin(), clusters[i1].second.end(), clusters[i2].second.begin(), clusters[i2].second.end(), std::back_inserter(intersection));
+			num_intersects_table(i1, i2) = intersection.size();
+		}
+	}
+	return num_intersects_table;
 }
 
 std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix)
@@ -45,75 +32,74 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
 
     // Form clusters of tracks sharing measurements
     std::set<int> missed_tracks;
-    std::vector<ClusterPtr> clusters;
+    std::vector<std::pair<std::vector<int>, std::set<int>>> clusters;
+    std::vector<ClusterPtr> clusters_obj;
 
-    std::vector<std::vector<int>> v_list(num_detections);
-    for (int detection = 0; detection < num_detections; detection++)
-    {
-        for (int track = 0; track < num_tracks; track++)
-        {
-            if (validation_matrix_true(track, detection) == 1)
-            {
-                v_list[detection].push_back(track);
-            }
-        }
+	for (int i = 0; i < num_tracks; i++)
+	{
+		std::pair<std::vector<int>, std::set<int>> cluster;
+		cluster.first.push_back(i);
+		for (int j = 0; j < num_detections; j++)
+		{
+			if (validation_matrix_true(i, j) == 1)
+			{
+				cluster.second.insert(j+1);
+			}
+		}
+		clusters.push_back(cluster);
+	}
+    
+	// Get table of number of intersections between clusters
+	Eigen::MatrixXi num_intersects_table = getNumIntersectsTable(clusters);
+
+    // Continue until we have only one cluster or none of them intersect
+    while (clusters.size() > 0) {
+        // Find maximum intersection - if no intersection, break
+        Eigen::Index maxi, maxj; // Use Eigen::Index for indexing
+        int maxVal = num_intersects_table.maxCoeff(&maxi, &maxj);
+		if (maxVal == 0) {
+			break;
+		}
+
+        // Merge one cluster into another and delete it
+		std::vector<int> merged_tracks;
+		std::set<int> merged_detections;
+		merged_tracks.insert(merged_tracks.end(), clusters[maxi].first.begin(), clusters[maxi].first.end());
+		merged_tracks.insert(merged_tracks.end(), clusters[maxj].first.begin(), clusters[maxj].first.end());
+		std::set_union(clusters[maxi].second.begin(), clusters[maxi].second.end(), clusters[maxj].second.begin(), clusters[maxj].second.end(), std::inserter(merged_detections, merged_detections.begin()));
+		clusters[maxi] = std::make_pair(merged_tracks, merged_detections);
+		clusters.erase(clusters.begin() + maxj);
+
+		// Update table of number of intersections between clusters
+		num_intersects_table = getNumIntersectsTable(clusters);
     }
 
-    std::vector<std::vector<int>> graph(num_tracks, std::vector<int>(num_tracks));
-    for (auto& v : v_list)
-    {
-        if (v.size() == 0)
-            continue;
-        for (int i = 0; i < v.size()-1; i++)
-        {
-            int j = i + 1;
-            graph[v[i]][v[j]] = 1;
-            graph[v[j]][v[i]] = 1;
-        }
-    }
+	for (auto& clust : clusters) {
+		if (clust.second.size() == 0) {
+			missed_tracks.insert(clust.first[0]);
+			continue;
+		}
+		clust.second.insert(0);
+		std::vector<int> v_detections_vec(clust.second.begin(), clust.second.end());
+		Eigen::MatrixXi c_validation_matrix = validation_matrix(clust.first, v_detections_vec);
+		Eigen::MatrixXd c_likelihood_matrix;
+		if (likelihood_matrix.rows() == 0) {
+			c_likelihood_matrix = Eigen::MatrixXd::Zero(0, 0);
+		}
+		else {
+			c_likelihood_matrix = likelihood_matrix(clust.first, v_detections_vec);
+		}
+		ClusterPtr cluster = std::make_shared<Cluster>(Cluster(clust.first, v_detections_vec, c_validation_matrix, c_likelihood_matrix));
+		clusters_obj.push_back(cluster);
+	}
 
-    std::vector<std::vector<int>> components = findConnectedComponents(graph);
+	if (missed_tracks.size() > 0) {
+		std::vector<int> missed_tracks_vec(missed_tracks.begin(), missed_tracks.end());
+		ClusterPtr c = std::make_shared<Cluster>(Cluster(missed_tracks_vec));
+		clusters_obj.push_back(c);
+	}
 
-    for (auto& tracks : components) {
-        std::set<int> v_detections;
-        for (auto& track : tracks)
-        {
-            for (int detection = 0; detection < num_detections; detection++)
-            {
-                if (validation_matrix_true(track, detection) == 1)
-                {
-                    v_detections.insert(detection + 1);
-                }
-            }
-        }
-        if (v_detections.size() == 0) {
-            for (auto& track : tracks)
-            {
-                missed_tracks.insert(track);
-            }
-            continue;
-        }
-        v_detections.insert(0);
-        std::vector<int> v_detections_vec(v_detections.begin(), v_detections.end());
-        Eigen::MatrixXi c_validation_matrix = validation_matrix(tracks, v_detections_vec);
-        Eigen::MatrixXd c_likelihood_matrix;
-        if (likelihood_matrix.rows() == 0) {
-            c_likelihood_matrix = Eigen::MatrixXd::Zero(0, 0);
-        }
-        else {
-            c_likelihood_matrix = likelihood_matrix(tracks, v_detections_vec);
-        }
-        ClusterPtr c = std::make_shared<Cluster>(Cluster(tracks, v_detections_vec, c_validation_matrix, c_likelihood_matrix));
-        clusters.push_back(c);
-    }
-
-    if (missed_tracks.size() > 0) {
-        std::vector<int> missed_tracks_vec(missed_tracks.begin(), missed_tracks.end());
-        ClusterPtr c = std::make_shared<Cluster>(Cluster(missed_tracks_vec));
-        clusters.push_back(c);
-    }
-
-    return clusters;
+    return clusters_obj;
 }
 
 } // namespace utils

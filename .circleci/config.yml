@@ -3,15 +3,14 @@ workflows:
   version: 2
   test:
     jobs:
-      - python-37
-      - python-38
       - python-39
       - python-310
       - python-311
+      - python-312
 jobs:
-  python-37: &test-template
+  python-39: &test-template
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.9
     steps:
       - checkout
       - restore_cache:
@@ -45,14 +44,6 @@ jobs:
               -F unittests \
               -n ${CIRCLE_BUILD_NUM}
     resource_class: large
-  python-38:
-    <<: *test-template
-    docker:
-      - image: cimg/python:3.8
-  python-39:
-    <<: *test-template
-    docker:
-      - image: cimg/python:3.9
   python-310:
     <<: *test-template
     docker:
@@ -61,3 +52,7 @@ jobs:
     <<: *test-template
     docker:
       - image: cimg/python:3.11
+  python-312:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.12

@@ -38,11 +38,11 @@ setup(
     packages=find_packages(exclude=('docs', '*.tests')),
     install_requires=['numpy', 'networkx', 'stonesoup', 'setuptools>=42', 'pydot', 'matplotlib'],
     extras_require={
-        'dev': ['pytest-flake8', 'pytest-cov', 'flake8<5', 'sphinx', 'sphinx_rtd_theme',
+        'dev': ['pytest-flake8', 'pytest-cov', 'flake8', 'sphinx', 'sphinx_rtd_theme',
                 'sphinx-gallery>=0.8']
     },
     entry_points={'stonesoup.plugins': 'pyehm = pyehm.plugins.stonesoup'},
-    python_requires='>=3.7',
+    python_requires='>=3.9',
     use_scm_version=True,
     keywords=['python', 'pyehm', 'ehm'],
     classifiers=[

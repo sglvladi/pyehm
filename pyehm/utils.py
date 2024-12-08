@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_pydot import graphviz_layout
-from networkx.algorithms.components.connected import connected_components
 
 
 class EHMNetNode:
@@ -402,6 +401,16 @@ class Cluster:
         self.likelihood_matrix = likelihood_matrix
 
 
+def get_num_intersect_table(clusters):
+    """Get table of number of intersections between clusters"""
+    nclusters = len(clusters)
+    nintersect_table = np.zeros((nclusters, nclusters)).astype('int')
+    for i1, c1 in enumerate(clusters):
+        for i2, c2 in enumerate(clusters[i1+1:]):
+            nintersect_table[i1][i1+i2+1] = len(c1[1].intersection(c2[1]))
+    return nintersect_table
+
+
 def gen_clusters(validation_matrix, likelihood_matrix=None):
     """Cluster tracks into groups sharing detections
 
@@ -432,58 +441,47 @@ def gen_clusters(validation_matrix, likelihood_matrix=None):
     # Initiate parameters
     num_tracks, num_detections = np.shape(validation_matrix_true)  # Number of tracks
 
-    # Form clusters of tracks sharing measurements
-    missed_tracks = set([i for i in range(num_tracks)])
-    clusters = list()
+    clusters = [((i,), set(np.flatnonzero(validation_matrix_true[i, :]) + 1))
+                for i in range(num_tracks)]
 
-    # List of tracks gated for each detection
-    v_lists = [np.flatnonzero(validation_matrix_true[:, detection]) for detection in range(num_detections)]
+    # Get table of number of intersections
+    nintersect_table = get_num_intersect_table(clusters)
 
-    # Get clusters of tracks sharing common detections
-    G = to_graph(v_lists)
-    track_clusters = [t for t in connected_components(G)]
+    # Continue until we have only one cluster or none of them intersect
+    while len(clusters) > 0:
+        # Find maximum intersection - if no intersection, break
+        maxi, maxj = np.unravel_index(np.argmax(nintersect_table), nintersect_table.shape)
+        if nintersect_table[maxi, maxj] == 0:
+            break
 
-    # Create cluster objects that contain the indices of tracks (rows) and detections (cols)
-    for tracks in track_clusters:
-        v_detections = {0}
-        for track in tracks:
-            v_detections |= set(np.flatnonzero(validation_matrix_true[track, :]) + 1)
-        # Extract validation and likelihood matrices for cluster
-        tracks = sorted(tracks)
-        v_detections = sorted(v_detections)
-        c_validation_matrix = validation_matrix[tracks, :][:, v_detections]
+        # Merge one cluster into another and delete it
+        clusters[maxi] = (clusters[maxi][0] + clusters[maxj][0],
+                          clusters[maxi][1].union(clusters[maxj][1]))
+        del clusters[maxj]
+
+        # Compute new intersection table
+        nintersect_table = np.delete(np.delete(nintersect_table, (maxj), axis=0), (maxj), axis=1)
+        for j in range(maxi):
+            nintersect_table[j, maxi] = len(
+                clusters[maxi][1].intersection(clusters[j][1]))
+        for j in range(maxi + 1, nintersect_table.shape[0]):
+            nintersect_table[maxi, j] = len(
+                clusters[maxi][1].intersection(clusters[j][1]))
+
+    clusters_obj = []
+    missed_tracks = []
+    for clust in clusters:
+        if not len(clust[1]):
+            missed_tracks.append(clust[0][0])
+            continue
+        tracks = list(clust[0])
+        detections = list(sorted(clust[1] | {0}))
+        c_validation_matrix = validation_matrix[tracks, :][:, detections]
         if likelihood_matrix is not None:
-            c_likelihood_matrix = likelihood_matrix[tracks, :][:, v_detections]
+            c_likelihood_matrix = likelihood_matrix[tracks, :][:, detections]
         else:
             c_likelihood_matrix = None
-        clusters.append(Cluster(tracks, v_detections, c_validation_matrix, c_likelihood_matrix))
 
-    # Get tracks (rows) that are not associated to any detections
-    detected_tracks = set([j for i in track_clusters for j in i])
-    missed_tracks = missed_tracks - detected_tracks
+        clusters_obj.append(Cluster(tracks, list(detections), c_validation_matrix, c_likelihood_matrix))
 
-    return clusters, list(missed_tracks)
-
-
-def to_graph(lst):
-    G = nx.Graph()
-    for part in lst:
-        # each sublist is a bunch of nodes
-        G.add_nodes_from(part)
-        # it also implies a number of edges:
-        G.add_edges_from(to_edges(part))
-    return G
-
-
-def to_edges(lst):
-    """
-        treat `l` as a Graph and return it's edges
-        to_edges(['a','b','c','d']) -> [(a,b),(b,c),(c,d)]
-    """
-    if not len(lst):
-        return
-    it = iter(lst)
-    last = next(it)
-    for current in it:
-        yield last, current
-        last = current
+    return clusters_obj, list(missed_tracks)

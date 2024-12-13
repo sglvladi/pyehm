@@ -46,7 +46,7 @@ setup(
     use_scm_version=True,
     keywords=['python', 'pyehm', 'ehm'],
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: Eclipse Public License 2.0 (EPL-2.0)",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",

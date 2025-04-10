@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from functools import lru_cache
+import itertools
 from typing import Union, List, Sequence
 
 import networkx
@@ -25,42 +27,13 @@ class EHMNetNode:
         # Index of the layer (track) in the network
         self.layer = layer
         # Identity of the node
-        self.identity = identity if identity else set()
+        self.identity = identity if identity else frozenset()
         # Index of the node when added to the network. This is set by the network and
         # should not be edited.
         self.ind = None
 
     def __repr__(self):
-        return 'EHMNetNode(ind={}, layer={}, identity={})'.format(self.ind, self.layer, self.identity)
-
-
-class EHM2NetNode(EHMNetNode):
-    """A node in the :class:`~.EHMNet` constructed by :class:`~.EHM2`.
-
-    Parameters
-    ----------
-    layer: :class:`int`
-        Index of the network layer in which the node is placed.
-    track: :class:`int`
-        Index of track this node relates to.
-    subnet: :class:`int`
-        Index of subnet to which the node belongs.
-    identity: :class:`set` of :class:`int`
-        The identity of the node. As per Section 3.1 of [EHM1]_, "the identity for each node is an indication of how
-        measurement assignments made for tracks already considered affect assignments for tracks remaining to be
-        considered".
-    """
-    def __init__(self, layer, track=None, subnet=0, identity=None):
-        super().__init__(layer, identity)
-        # Index of track this node relates to
-        self.track = track
-        # Index of subnet the node belongs to
-        self.subnet = subnet
-
-    def __repr__(self):
-        return 'EHM2NetNode(ind={}, layer={}, track={}, subnet={}, identity={})'.format(self.ind, self.layer,
-                                                                                        self.track, self.subnet,
-                                                                                        self.identity)
+        return f'{self.__class__.__name__}(ind={self.ind}, layer={self.layer}, identity={self.identity})'
 
 
 class EHMNet:
@@ -79,37 +52,34 @@ class EHMNet:
         ```(parent, child)```, where ```parent``` and ```child``` are the source and target nodes respectively. The
         values of the dictionary are the measurement indices that describe the parent-child relationship.
     """
-    def __init__(self, nodes, validation_matrix, edges=None):
+    def __init__(self, nodes, validation_matrix, edges=None, tree=None):
 
         self._num_layers = 0
         self.validation_matrix = validation_matrix
-        self.edges = edges if edges is not None else dict()
-        self.nodes_per_track = dict()
-        self.nodes_per_layer_subnet = dict()
-        self.nodes_per_identity = dict()
+        self.node_per_layer_identity = {-1: {}}
+        self.children_per_detection = dict()
 
-        self._parents = dict()
-        self._children = dict()
         self._nodes = nodes
+
+        self.child_layers = dict()
+        for node in tree.nodes:
+            self.child_layers[node.track] = [child.track for child in node.children]
+
+        self.acc_per_layer = dict()
+        for node in tree.nodes:
+            self.acc_per_layer[node.track] = frozenset(node.detections)
+            self.node_per_layer_identity[node.track] = {}
 
         for n_i, node in enumerate(nodes):
             node.ind = n_i
-            if isinstance(node, EHM2NetNode):
-                if node.layer + 1 > self._num_layers:
-                    self._num_layers = node.layer + 1
-            else:
-                if node.layer + 2 > self._num_layers:
-                    self._num_layers = node.layer + 2
+            try:
+                self.node_per_layer_identity[node.layer][node.identity].add(node.ind)
+            except KeyError:
+                self.node_per_layer_identity[node.layer][node.identity] = {node.ind}
 
-            # Create layer-subnet-node look-up
-            if isinstance(node, EHM2NetNode):
-                try:
-                    self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node.ind)
-                except KeyError:
-                    self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node.ind}
 
     @property
-    def root(self) -> Union[EHMNetNode, EHM2NetNode]:
+    def root(self) -> EHMNetNode:
         """The root node of the net."""
         return self.nodes[0]
 
@@ -121,36 +91,39 @@ class EHMNet:
     @property
     def num_layers(self) -> int:
         """Number of layers in the net"""
-        return self._num_layers
+        return len(self.node_per_layer_identity)
 
     @property
-    def nodes(self) -> Union[List[EHMNetNode], List[EHM2NetNode]]:
+    def nodes(self) -> List[EHMNetNode]:
         """The nodes comprising the net"""
         return self._nodes
 
     @property
-    def nodes_forward(self) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
+    def nodes_forward(self) -> Sequence[EHMNetNode]:
         """The net nodes, ordered by increasing layer"""
-        return sorted(self.nodes, key=lambda x: x.layer)
+        nodes_forward_idx = []
+        for layer in sorted(self.node_per_layer_identity):
+            if layer < 0:
+                continue
+            nodes_forward_idx += sorted(self.get_nodes_by_layer(layer))
+        nodes_forward_idx += sorted(self.get_nodes_by_layer(-1))
+        return [self.nodes[i] for i in nodes_forward_idx]
 
     @property
     def nx_graph(self) -> networkx.Graph:
         """A NetworkX representation of the net. Mainly used for plotting the net."""
         g = nx.Graph()
-        for child in sorted(self.nodes, key=lambda x: x.layer):
+        for child in self.nodes_forward:
             parents = self.get_parents(child)
-            if isinstance(child, EHM2NetNode):
-                track = child.track
-            else:
-                track = child.layer + 1 if child.layer + 2 < self.num_layers else None
+            track = child.layer
             identity = child.identity
             g.add_node(child.ind, track=track, identity=identity)
             for parent in parents:
-                label = str(self.edges[(parent, child)]).replace('{', '').replace('}', '')
+                label = str(self.edges[(parent.ind, child.ind)]).replace('{', '').replace('}', '')
                 g.add_edge(parent.ind, child.ind, detections=label)
         return g
 
-    def add_node(self, node: Union[EHMNetNode, EHM2NetNode], parent: Union[EHMNetNode, EHM2NetNode], detection: int):
+    def add_node(self, node: EHMNetNode, parent: EHMNetNode, detection: int):
         """Add a new node in the network.
 
         Parameters
@@ -166,27 +139,17 @@ class EHMNet:
         node.ind = len(self.nodes)
         # Add node to graph
         self.nodes.append(node)
-        # Create edge from parent to child
-        self.edges[(parent.ind, node.ind)] = {detection}
-        self._parents[node.ind] = {parent.ind}
+        # try:
+        #     self.children_per_detection[(parent.ind, detection)].add(node.ind)
+        # except KeyError:
+        #     self.children_per_detection[(parent.ind, detection)] = {node.ind}
+
         try:
-            self._children[parent.ind].add(node.ind)
+            self.node_per_layer_identity[node.layer][node.identity].add(node.ind)
         except KeyError:
-            self._children[parent.ind] = {node.ind}
+            self.node_per_layer_identity[node.layer][node.identity] = {node.ind}
 
-        if isinstance(node, EHM2NetNode):
-            if node.layer + 1 > self._num_layers:
-                self._num_layers = node.layer + 1
-            # Create layer-subnet-node look-up
-            try:
-                self.nodes_per_layer_subnet[(node.layer, node.subnet)].add(node.ind)
-            except KeyError:
-                self.nodes_per_layer_subnet[(node.layer, node.subnet)] = {node.ind}
-        else:
-            if node.layer + 2 > self._num_layers:
-                self._num_layers = node.layer + 2
-
-    def add_edge(self, parent: Union[EHMNetNode, EHM2NetNode], child: Union[EHMNetNode, EHM2NetNode], detection: int):
+    def add_edge(self, parent: EHMNetNode, child:EHMNetNode, detection: int):
         """ Add edge between two nodes, or update an already existing edge by adding the detection to it.
 
         Parameters
@@ -198,56 +161,10 @@ class EHMNet:
         detection: :class:`int`
             Index of measurement representing the parent child relationship.
         """
-        try:
-            self.edges[(parent.ind, child.ind)].add(detection)
-        except KeyError:
-            self.edges[(parent.ind, child.ind)] = {detection}
-        try:
-            self._children[parent.ind].add(child.ind)
-        except KeyError:
-            self._children[parent.ind] = {child.ind}
-        try:
-            self._parents[child.ind].add(parent.ind)
-        except KeyError:
-            self._parents[child.ind] = {parent.ind}
-
-    def get_parents(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
-        """Get the parents of a node.
-
-        Parameters
-        ----------
-        node: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
-            The node whose parents should be returned
-
-        Returns
-        -------
-        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
-            List of parent nodes
-        """
-        try:
-            parents = self.get_nodes(list(self._parents[node.ind]))
-        except KeyError:
-            parents = []
-        return parents  # [edge[0] for edge in self.edges if edge[1] == node]
-
-    def get_children(self, node: Union[EHMNetNode, EHM2NetNode]) -> Union[Sequence[EHMNetNode], Sequence[EHM2NetNode]]:
-        """Get the children of a node.
-
-        Parameters
-        ----------
-        node: :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
-            The node whose children should be returned
-
-        Returns
-        -------
-        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
-            List of child nodes
-        """
-        try:
-            children = self.get_nodes(list(self._children[node.ind]))
-        except KeyError:
-            children = []
-        return children  # [edge[1] for edge in self.edges if edge[0] == node]
+        # try:
+        #     self.children_per_detection[(parent.ind, detection)].add(child.ind)
+        # except KeyError:
+        #     self.children_per_detection[(parent.ind, detection)] = {child.ind}
 
     def get_nodes(self, inds: List[int]):
         """Get nodes by index
@@ -263,6 +180,33 @@ class EHMNet:
             List of nodes
         """
         return [self.nodes[ind] for ind in inds]
+
+    def get_nodes_by_layer(self, layer: int):
+        """Get nodes by layer
+
+        Parameters
+        ----------
+        layer: :class:`int`
+            Layer index
+
+        Returns
+        -------
+        :class:`list` of :class:`~.EHMNetNode` or :class:`~.EHM2NetNode`
+            List of nodes in the specified layer
+        """
+        return list(itertools.chain.from_iterable(self.node_per_layer_identity[layer].values()))
+    
+    def get_children_per_detection(self, parent: EHMNetNode, detection: int):
+        v_children = []
+        child_layers = self.child_layers[parent.layer]
+        if not child_layers:
+            return self.get_nodes_by_layer(-1)
+        for child_layer in child_layers:
+            identity = compute_identity(self.acc_per_layer[child_layer], parent.identity, detection)
+            v_children += [c_i for c_i in self.node_per_layer_identity[child_layer][identity]]
+        return v_children
+
+
 
     def plot(self, ax: plt.Axes = None, annotate=True):
         """Plot the net.
@@ -313,11 +257,10 @@ class EHM2Tree:
     subtree: :class:`int`
         Index of subtree the current tree belongs to.
     """
-    def __init__(self, track, children, detections, subtree):
+    def __init__(self, track, children, detections):
         self.track = track
         self.children = children
         self.detections = detections
-        self.subtree = subtree
 
     @property
     def depth(self) -> int:
@@ -448,6 +391,11 @@ def gen_clusters(validation_matrix, likelihood_matrix=None):
 
     # Continue until we have only one cluster or none of them intersect
     while len(clusters) > 0:
+        # Find next intersection - if no intersection, break
+        # try:
+        #     maxi, maxj = np.unravel_index(np.flatnonzero(nintersect_table)[0], nintersect_table.shape)
+        # except IndexError:
+        #     break
         # Find maximum intersection - if no intersection, break
         maxi, maxj = np.unravel_index(np.argmax(nintersect_table), nintersect_table.shape)
         if nintersect_table[maxi, maxj] == 0:
@@ -484,3 +432,7 @@ def gen_clusters(validation_matrix, likelihood_matrix=None):
         clusters_obj.append(Cluster(tracks, list(detections), c_validation_matrix, c_likelihood_matrix))
 
     return clusters_obj, list(missed_tracks)
+
+# @lru_cache()
+def compute_identity(acc, parent_identity, detection):
+    return frozenset(acc.intersection(parent_identity | {detection}) - {0})

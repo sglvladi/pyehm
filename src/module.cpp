@@ -57,7 +57,8 @@ PYBIND11_MODULE(_pyehm, m) {
         .def_readwrite("track", &EHM2Tree::track)
         .def_readwrite("children", &EHM2Tree::children)
         .def_readwrite("detections", &EHM2Tree::detections)
-        .def_property_readonly("depth", &EHM2Tree::getDepth, docstrings::EHM2Tree_depth().c_str());
+        .def_property_readonly("depth", &EHM2Tree::getDepth, docstrings::EHM2Tree_depth().c_str())
+        .def_property_readonly("nodes", &EHM2Tree::getNodes, docstrings::EHM2Tree_nodes().c_str());
 
     // Utils
     py::class_<Cluster, ClusterPtr>(utils_m, "Cluster", docstrings::Cluster().c_str())

@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 
 #include "EHMNetNode.h"
-#include "EHM2Tree.h"
+#include "EHMTree.h"
 #include "../utils/Utils.h"
 
 namespace ehm
@@ -23,7 +23,7 @@ public:
     Eigen::MatrixXi validation_matrix;
 
     EHMNet() = default;
-    EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXi& validation_matrix, const EHM2TreePtr tree);
+    EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXi& validation_matrix, const EHMTreePtr tree);
 
     void addNode(EHMNetNodePtr node, const EHMNetNodePtr parent, const int detection);
     void addEdge(const EHMNetNodePtr& parent, const EHMNetNodePtr& child, const int detection);
@@ -39,7 +39,7 @@ public:
 private:
     int _num_layers = 0;
     std::vector<EHMNetNodePtr> _nodes;
-	EHM2TreePtr _tree;
+	EHMTreePtr _tree;
     std::map<int, std::map<EHMNetNodeIdentity, std::vector<int>>> _node_per_layer_identity;
     std::map<int, std::vector<int>> _child_layers;
 	std::map<int, std::set<int>> _acc_per_layer;

@@ -17,18 +17,18 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
     int num_detections = validation_matrix.cols();
 
     // Construct tree
-    EHM2TreePtr tree = constructTree(validation_matrix);
-    std::vector<EHM2TreePtr> nodes = tree->getNodes();
+    EHMTreePtr tree = constructTree(validation_matrix);
+    std::vector<EHMTreePtr> nodes = tree->getNodes();
 
     // Initialise net
     EHMNetNodePtr root = std::make_shared<EHMNetNode>(EHMNetNode(0, {}));
     EHMNetPtr net = std::make_shared<EHMNet>(EHMNet(root, validation_matrix, tree));
 
     // Construct net
-    std::stack<EHM2TreePtr> stack;
+    std::stack<EHMTreePtr> stack;
     stack.push(tree);
     while (!stack.empty()) {
-        EHM2TreePtr tree = stack.top();
+        EHMTreePtr tree = stack.top();
 		stack.pop();
 
         // Get list of nodes in previous layer of subtree
@@ -264,12 +264,12 @@ Eigen::MatrixXd EHM::run(const Eigen::MatrixXi& validation_matrix, const Eigen::
     return a_matrix;
 }
 
-EHM2TreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
+EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
 {
     int num_tracks = validation_matrix.rows();
     int num_detections = validation_matrix.cols();
 
-    EHM2TreePtr tree;
+    EHMTreePtr tree;
 
     for (int i = num_tracks - 1; i >= 0; i--) {
         // Get indices of hypothesised detections for the track (minus the null hypothesis)
@@ -283,12 +283,12 @@ EHM2TreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
         }
 
 		if (tree == nullptr) {
-			tree = std::make_shared<EHM2Tree>(EHM2Tree(i, {}, v_detections));
+			tree = std::make_shared<EHMTree>(EHMTree(i, {}, v_detections));
 		}
         else {
             std::set<int> detections(v_detections.begin(), v_detections.end());
             std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
-			tree = std::make_shared<EHM2Tree>(EHM2Tree(i, {tree}, detections));
+			tree = std::make_shared<EHMTree>(EHMTree(i, {tree}, detections));
         }
         
     }

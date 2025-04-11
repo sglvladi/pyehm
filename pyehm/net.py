@@ -1,1 +1,1 @@
-from _pyehm.net import EHMNetNode, EHMNet, EHM2Tree   # noqa: F401
+from _pyehm.net import EHMNetNode, EHMNet, EHMTree   # noqa: F401

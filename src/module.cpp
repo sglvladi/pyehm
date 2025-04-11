@@ -42,7 +42,7 @@ PYBIND11_MODULE(_pyehm, m) {
 
     // Nets
     py::class_<EHMNet, EHMNetPtr>(net_m, "EHMNet", docstrings::EHMNet().c_str())
-        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXi&, const EHM2TreePtr>(), "root"_a, "validation_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
+        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXi&, const EHMTreePtr>(), "root"_a, "validation_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
         .def_readonly("validation_matrix", &EHMNet::validation_matrix)
         .def_property_readonly("num_layers", &EHMNet::getNumLayers, docstrings::EHMNet_num_layers().c_str())
         .def_property_readonly("num_nodes", &EHMNet::getNumNodes, docstrings::EHMNet_num_nodes().c_str())
@@ -52,13 +52,13 @@ PYBIND11_MODULE(_pyehm, m) {
         .def("add_node", &EHMNet::addNode, "node"_a, "parent"_a, "detection"_a, docstrings::EHMNet_add_node().c_str())
         .def("add_edge", &EHMNet::addEdge, "parent"_a, "child"_a, "detection"_a, docstrings::EHMNet_add_edge().c_str());
 
-    py::class_<EHM2Tree, EHM2TreePtr>(net_m, "EHM2Tree", docstrings::EHM2Tree().c_str())
-        .def(py::init<int, std::vector<EHM2TreePtr>, EHMNetNodeIdentity>(), "track"_a, "childred"_a, "detections"_a)
-        .def_readwrite("track", &EHM2Tree::track)
-        .def_readwrite("children", &EHM2Tree::children)
-        .def_readwrite("detections", &EHM2Tree::detections)
-        .def_property_readonly("depth", &EHM2Tree::getDepth, docstrings::EHM2Tree_depth().c_str())
-        .def_property_readonly("nodes", &EHM2Tree::getNodes, docstrings::EHM2Tree_nodes().c_str());
+    py::class_<EHMTree, EHMTreePtr>(net_m, "EHMTree", docstrings::EHMTree().c_str())
+        .def(py::init<int, std::vector<EHMTreePtr>, EHMNetNodeIdentity>(), "track"_a, "childred"_a, "detections"_a)
+        .def_readwrite("track", &EHMTree::track)
+        .def_readwrite("children", &EHMTree::children)
+        .def_readwrite("detections", &EHMTree::detections)
+        .def_property_readonly("depth", &EHMTree::getDepth, docstrings::EHMTree_depth().c_str())
+        .def_property_readonly("nodes", &EHMTree::getNodes, docstrings::EHMTree_nodes().c_str());
 
     // Utils
     py::class_<Cluster, ClusterPtr>(utils_m, "Cluster", docstrings::Cluster().c_str())

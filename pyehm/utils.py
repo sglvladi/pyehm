@@ -3,15 +3,15 @@ from typing import Union
 import networkx as nx
 
 from _pyehm.utils import Cluster, gen_clusters  # noqa: F401
-from .net import EHMNet, EHM2Tree
+from .net import EHMNet, EHMTree
 
 
-def to_nx_graph(obj: Union[EHMNet, EHM2Tree]) -> nx.Graph:
+def to_nx_graph(obj: Union[EHMNet, EHMTree]) -> nx.Graph:
     """Get a NetworkX representation of a net or tree. Mainly used for plotting.
 
     Parameters
     ----------
-    obj : :class:`~.EHMNet` | :class:`~.EHM2Net` | :class:`~.EHM2Tree`
+    obj : :class:`~.EHMNet` | :class:`~.EHM2Net` | :class:`~.EHMTree`
         The object to convert to a NetworkX graph.
 
     Returns

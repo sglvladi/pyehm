@@ -16,9 +16,9 @@ namespace docstrings
     std::string EHMNet_add_node();
     std::string EHMNet_add_edge();
 
-    std::string EHM2Tree();
-    std::string EHM2Tree_depth();
-    std::string EHM2Tree_nodes();
+    std::string EHMTree();
+    std::string EHMTree_depth();
+    std::string EHMTree_nodes();
 
     std::string Cluster();
     std::string gen_clusters();

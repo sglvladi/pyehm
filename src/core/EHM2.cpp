@@ -10,12 +10,12 @@ EHM2::EHM2()
 {
 }
 
-EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
+EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
 {
     int num_tracks = validation_matrix.rows();
     int num_detections = validation_matrix.cols();
 
-    std::vector<EHM2TreePtr> trees;
+    std::vector<EHMTreePtr> trees;
 
     for (int i = num_tracks - 1; i >= 0; i--) {
         // Get indices of hypothesised detections for the track (minus the null hypothesis)
@@ -31,7 +31,7 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> matched;
         std::vector<int> unmatched;
         for (int j = 0; j < trees.size(); j++) {
-            EHM2TreePtr tree = trees[j];
+            EHMTreePtr tree = trees[j];
             std::set<int> tree_detections = tree->detections;
             std::set<int> intersection;
             std::set_intersection(v_detections.begin(), v_detections.end(), tree_detections.begin(), tree_detections.end(), std::inserter(intersection, intersection.begin()));
@@ -44,7 +44,7 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             }
         }
 
-        std::vector<EHM2TreePtr> children;
+        std::vector<EHMTreePtr> children;
         if (!matched.empty()) {
             for (int j = 0; j < matched.size(); j++) {
                 children.push_back(trees[matched[j]]);
@@ -53,9 +53,9 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             for (auto& tree : children) {
                 std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
             }
-            EHM2TreePtr tree = std::make_shared<EHM2Tree>(EHM2Tree(i, children, detections));
+            EHMTreePtr tree = std::make_shared<EHMTree>(EHMTree(i, children, detections));
 
-            std::vector<EHM2TreePtr> new_trees;
+            std::vector<EHMTreePtr> new_trees;
             for (auto& j : unmatched) {
                 new_trees.push_back(trees[j]);
             }
@@ -63,14 +63,14 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             trees = new_trees;
         }
         else {
-            EHM2TreePtr tree = std::make_shared<EHM2Tree>(EHM2Tree(i, children, v_detections));
+            EHMTreePtr tree = std::make_shared<EHMTree>(EHMTree(i, children, v_detections));
             trees.push_back(tree);
         }
     }
 
     // TODO: Add error if trees.size() != 1
 
-    EHM2TreePtr tree = trees[0];
+    EHMTreePtr tree = trees[0];
 
     return tree;
 }

@@ -3,7 +3,7 @@
 #include <stack>
 
 #include "EHM.h"
-#include "../net/EHM2Tree.h"
+#include "../net/EHMTree.h"
 #include "../utils/Utils.h"
 #include "../utils/Cluster.h"
 
@@ -19,7 +19,7 @@ class EHM2: public EHM
 {
 public:
     EHM2();
-    EHM2TreePtr constructTree(const Eigen::MatrixXi& validation_matrix) override;
+    EHMTreePtr constructTree(const Eigen::MatrixXi& validation_matrix) override;
 };
 
 } // namespace core

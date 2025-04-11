@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.drawing.nx_pydot import graphviz_layout
 
-from .net import EHMNet, EHM2Net, EHM2Tree
+from .net import EHMNet, EHM2Net, EHMTree
 from .utils import to_nx_graph
 
 
@@ -45,12 +45,12 @@ def plot_net(net: Union[EHMNet, EHM2Net], ax: plt.Axes = None, annotate=True):
         nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
 
 
-def plot_tree(tree: EHM2Tree, ax: plt.Axes = None, annotate=True):
+def plot_tree(tree: EHMTree, ax: plt.Axes = None, annotate=True):
     """Plot the tree.
 
     Parameters
     ----------
-    tree : :class:`~.EHM2Tree`
+    tree : :class:`~.EHMTree`
         The tree to plot.
     ax: :class:`matplotlib.axes.Axes`
         Axes on which to plot the tree. If ``None``, a new figure and axes will be created.

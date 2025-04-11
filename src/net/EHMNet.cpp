@@ -22,9 +22,11 @@ EHMNet::EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXi& validation_matri
 			_child_layers[node->track].push_back(child->track);
         }
 		// Set up accumulated detections per layer
-		_acc_per_layer[node->track] = node->detections;
+		std::set<int> acc(node->detections.begin(), node->detections.end());
+		_acc_per_layer[node->track] = acc;
 	}
 
+	// Conver identity to bitset
 	_node_per_layer_identity[root->layer][root->identity].push_back(root->id);
 
 }

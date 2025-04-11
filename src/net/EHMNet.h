@@ -40,7 +40,7 @@ private:
     int _num_layers = 0;
     std::vector<EHMNetNodePtr> _nodes;
 	EHMTreePtr _tree;
-    std::map<int, std::map<EHMNetNodeIdentity, std::vector<int>>> _node_per_layer_identity;
+    std::map<int, std::map<std::vector<int>, std::vector<int>>> _node_per_layer_identity;
     std::map<int, std::vector<int>> _child_layers;
 	std::map<int, std::set<int>> _acc_per_layer;
 

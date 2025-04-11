@@ -273,12 +273,12 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
 
     for (int i = num_tracks - 1; i >= 0; i--) {
         // Get indices of hypothesised detections for the track (minus the null hypothesis)
-        std::set<int> v_detections;
+        std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
             if (validation_matrix(i, detection) == 1)
             {
-                v_detections.insert(detection);
+                v_detections.push_back(detection);
             }
         }
 
@@ -286,8 +286,8 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
 			tree = std::make_shared<EHMTree>(EHMTree(i, {}, v_detections));
 		}
         else {
-            std::set<int> detections(v_detections.begin(), v_detections.end());
-            std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
+            std::vector<int> detections(v_detections.begin(), v_detections.end());
+			std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::back_inserter(detections));
 			tree = std::make_shared<EHMTree>(EHMTree(i, {tree}, detections));
         }
         

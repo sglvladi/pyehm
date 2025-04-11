@@ -102,23 +102,23 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
     return clusters_obj;
 }
 
-std::set<int> computeIdentity(const std::set<int>& acc, const std::set<int>& parent_identity, int detection)
+std::vector<int> computeIdentity(const std::set<int>& acc, const std::vector<int>& parent_identity, int detection)
 
 {
-	std::set<int> identity;
+	std::vector<int> identity;
 	std::unordered_set<int> inter(parent_identity.begin(), parent_identity.end());
 	inter.insert(detection);
 
 	for (const int& elem : acc) {
 		if (inter.find(elem) != inter.end()) {
-			identity.insert(elem);
+			identity.push_back(elem);
 		}
 	}
 
 	return identity;
 }
 
-std::unordered_set<int> computeRemainingDetections(const std::set<int>& v_detections, const std::set<int>& parent_identity)
+std::unordered_set<int> computeRemainingDetections(const std::set<int>& v_detections, const std::vector<int>& parent_identity)
 {
 	std::unordered_set<int> v_detections_m1;
 	std::set_difference(v_detections.begin(), v_detections.end(),

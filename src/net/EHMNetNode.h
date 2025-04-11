@@ -12,7 +12,7 @@ namespace ehm
 namespace net
 {
 
-typedef std::set<int> EHMNetNodeIdentity;
+typedef std::vector<int> EHMNetNodeIdentity;
 
 class EHMNetNode
 {

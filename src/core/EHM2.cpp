@@ -19,12 +19,12 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
 
     for (int i = num_tracks - 1; i >= 0; i--) {
         // Get indices of hypothesised detections for the track (minus the null hypothesis)
-        std::set<int> v_detections;
+        std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
             if (validation_matrix(i, detection) == 1)
             {
-                v_detections.insert(detection);
+                v_detections.push_back(detection);
             }
         }
 
@@ -32,7 +32,7 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> unmatched;
         for (int j = 0; j < trees.size(); j++) {
             EHMTreePtr tree = trees[j];
-            std::set<int> tree_detections = tree->detections;
+            std::vector<int> tree_detections = tree->detections;
             std::set<int> intersection;
             std::set_intersection(v_detections.begin(), v_detections.end(), tree_detections.begin(), tree_detections.end(), std::inserter(intersection, intersection.begin()));
             if (!intersection.empty()) {
@@ -49,11 +49,15 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             for (int j = 0; j < matched.size(); j++) {
                 children.push_back(trees[matched[j]]);
             }
+			// IMPORTANT: This needs to be a set to avoid out-of-order detections
             std::set<int> detections(v_detections.begin(), v_detections.end());
             for (auto& tree : children) {
-                std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
+                std::vector<int> tree_detections = tree->detections;
+				std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::inserter(detections, detections.begin()));
             }
-            EHMTreePtr tree = std::make_shared<EHMTree>(EHMTree(i, children, detections));
+			// Now that we have the (ordered!) union of all detections, we need to convert it back to a vector
+			std::vector<int> detections_vec(detections.begin(), detections.end());
+            EHMTreePtr tree = std::make_shared<EHMTree>(EHMTree(i, children, detections_vec));
 
             std::vector<EHMTreePtr> new_trees;
             for (auto& j : unmatched) {

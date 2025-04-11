@@ -3,10 +3,10 @@ from typing import Union
 import networkx as nx
 
 from _pyehm.utils import Cluster, gen_clusters  # noqa: F401
-from .net import EHMNet, EHM2Net, EHM2Tree
+from .net import EHMNet, EHM2Tree
 
 
-def to_nx_graph(obj: Union[EHMNet, EHM2Net, EHM2Tree]) -> nx.Graph:
+def to_nx_graph(obj: Union[EHMNet, EHM2Tree]) -> nx.Graph:
     """Get a NetworkX representation of a net or tree. Mainly used for plotting.
 
     Parameters
@@ -21,17 +21,6 @@ def to_nx_graph(obj: Union[EHMNet, EHM2Net, EHM2Tree]) -> nx.Graph:
 
     """
     if isinstance(obj, EHMNet):
-        g = nx.Graph()
-        for child in sorted(obj.nodes, key=lambda x: x.layer):
-            parents = obj.get_parents(child)
-            track = child.layer + 1 if child.layer + 2 < obj.num_layers else None
-            identity = child.identity
-            g.add_node(child.id, track=track, identity=identity)
-            for parent in parents:
-                label = obj.get_edges(parent, child)
-                g.add_edge(parent.id, child.id, detections=label)
-        return g
-    elif isinstance(obj, EHM2Net):
         g = nx.Graph()
         for parent in obj.nodes:
             track = parent.track if parent.track != -1 else None

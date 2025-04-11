@@ -102,5 +102,17 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
     return clusters_obj;
 }
 
+std::set<int> computeIdentity(const std::set<int> acc, const std::set<int> parent_identity, int detection)
+
+{
+	std::set<int> identity;
+	std::set<int> inter = parent_identity;
+	inter.insert(detection);
+	std::set_intersection(acc.begin(), acc.end(), inter.begin(), inter.end(), std::inserter(identity, identity.begin()));
+	// TODO: Remove
+	identity.erase(0);
+	return identity;
+}
+
 } // namespace utils
 } // namespace ehm

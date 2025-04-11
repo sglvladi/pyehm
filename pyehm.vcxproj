@@ -196,8 +196,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\utils\Cluster.cpp" />
-    <ClCompile Include="src\net\EHM2Net.cpp" />
-    <ClCompile Include="src\net\EHM2NetNode.cpp" />
     <ClCompile Include="src\net\EHM2Tree.cpp" />
     <ClCompile Include="src\net\EHMNet.cpp" />
     <ClCompile Include="src\net\EHMNetNode.cpp" />
@@ -515,8 +513,6 @@
     <ClInclude Include="src\core\EHM2.h" />
     <ClInclude Include="src\Docstrings.h" />
     <ClInclude Include="src\utils\Cluster.h" />
-    <ClInclude Include="src\net\EHM2Net.h" />
-    <ClInclude Include="src\net\EHM2NetNode.h" />
     <ClInclude Include="src\net\EHM2Tree.h" />
     <ClInclude Include="src\net\EHMNet.h" />
     <ClInclude Include="src\net\EHMNetNode.h" />
@@ -538,6 +534,10 @@
     <None Include="docs\build\_modules\pyehm\core.html" />
     <None Include="docs\build\_modules\pyehm\plugins\stonesoup.html" />
     <None Include="docs\build\_modules\pyehm\utils.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="visualisers\Eigen.natvis" />
+    <Natvis Include="visualisers\stl.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

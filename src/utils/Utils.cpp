@@ -5,7 +5,7 @@ namespace ehm
 namespace utils
 {
 
-Eigen::MatrixXi getNumIntersectsTable(std::vector<std::pair<std::vector<int>, std::set<int>>> clusters)
+Eigen::MatrixXi getNumIntersectsTable(const std::vector<std::pair<std::vector<int>, std::set<int>>>& clusters)
 {
 	int num_clusters = clusters.size();
 	Eigen::MatrixXi num_intersects_table = Eigen::MatrixXi::Zero(num_clusters, num_clusters);
@@ -53,7 +53,7 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
 	Eigen::MatrixXi num_intersects_table = getNumIntersectsTable(clusters);
 
     // Continue until we have only one cluster or none of them intersect
-    while (clusters.size() > 0) {
+    while (!clusters.empty()) {
         // Find maximum intersection - if no intersection, break
         Eigen::Index maxi, maxj; // Use Eigen::Index for indexing
         int maxVal = num_intersects_table.maxCoeff(&maxi, &maxj);
@@ -93,7 +93,7 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
 		clusters_obj.push_back(cluster);
 	}
 
-	if (missed_tracks.size() > 0) {
+	if (!missed_tracks.empty()) {
 		std::vector<int> missed_tracks_vec(missed_tracks.begin(), missed_tracks.end());
 		ClusterPtr c = std::make_shared<Cluster>(Cluster(missed_tracks_vec));
 		clusters_obj.push_back(c);
@@ -102,16 +102,29 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXi& validation_matrix, co
     return clusters_obj;
 }
 
-std::set<int> computeIdentity(const std::set<int> acc, const std::set<int> parent_identity, int detection)
+std::set<int> computeIdentity(const std::set<int>& acc, const std::set<int>& parent_identity, int detection)
 
 {
 	std::set<int> identity;
-	std::set<int> inter = parent_identity;
+	std::unordered_set<int> inter(parent_identity.begin(), parent_identity.end());
 	inter.insert(detection);
-	std::set_intersection(acc.begin(), acc.end(), inter.begin(), inter.end(), std::inserter(identity, identity.begin()));
-	// TODO: Remove
-	identity.erase(0);
+
+	for (const int& elem : acc) {
+		if (inter.find(elem) != inter.end()) {
+			identity.insert(elem);
+		}
+	}
+
 	return identity;
+}
+
+std::unordered_set<int> computeRemainingDetections(const std::set<int>& v_detections, const std::set<int>& parent_identity)
+{
+	std::unordered_set<int> v_detections_m1;
+	std::set_difference(v_detections.begin(), v_detections.end(),
+		parent_identity.begin(), parent_identity.end(),
+		std::inserter(v_detections_m1, v_detections_m1.begin()));
+	return v_detections_m1;
 }
 
 } // namespace utils

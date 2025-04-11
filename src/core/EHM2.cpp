@@ -35,7 +35,7 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
             std::set<int> tree_detections = tree->detections;
             std::set<int> intersection;
             std::set_intersection(v_detections.begin(), v_detections.end(), tree_detections.begin(), tree_detections.end(), std::inserter(intersection, intersection.begin()));
-            if (intersection.size() > 0) {
+            if (!intersection.empty()) {
                 // Add the track to the tree
                 matched.push_back(j);
             }
@@ -45,7 +45,7 @@ EHM2TreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         }
 
         std::vector<EHM2TreePtr> children;
-        if (matched.size()) {
+        if (!matched.empty()) {
             for (int j = 0; j < matched.size(); j++) {
                 children.push_back(trees[matched[j]]);
             }

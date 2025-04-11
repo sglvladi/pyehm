@@ -12,7 +12,9 @@ EHM::EHM()
 
 EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
 {
+	// Cache number of tracks and detections
     int num_tracks = validation_matrix.rows();
+    int num_detections = validation_matrix.cols();
 
     // Construct tree
     EHM2TreePtr tree = constructTree(validation_matrix);
@@ -33,7 +35,6 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
         std::vector<EHMNetNodePtr> parent_nodes = net->getNodesByLayer(tree->track);
 
         // Get indices of hypothesised detections for the track
-        int num_detections = net->validation_matrix.cols();
         std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++)
         {
@@ -44,7 +45,7 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
         }
 
         // If this is not a leaf layer
-        if (tree->children.size() > 0) {
+        if (!tree->children.empty()) {
             // Process each subtree
             for (auto& child_tree : tree->children) {
 
@@ -58,11 +59,7 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
                 for (auto& parent : parent_nodes) {
 
                     // Exclude any detections already considered by parent nodes (always include null)
-                    std::set<int> v_detections_m1;
-                    std::set_difference(v_detections.begin(), v_detections.end(),
-                        parent->identity.begin(), parent->identity.end(),
-                        std::inserter(v_detections_m1, v_detections_m1.begin()));
-                    v_detections_m1.insert(0);
+					std::unordered_set<int> v_detections_m1 = computeRemainingDetections(v_detections, parent->identity);
 
                     // Iterate over valid detections
                     for (int j : v_detections_m1)
@@ -97,17 +94,11 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
             for (auto& parent : parent_nodes) {
 
                 // Exclude any detections already considered by parent nodes (always include null)
-                std::set<int> v_detections_m1;
-                std::set_difference(v_detections.begin(), v_detections.end(),
-                    parent->identity.begin(), parent->identity.end(),
-                    std::inserter(v_detections_m1, v_detections_m1.begin()));
-                v_detections_m1.insert(0);
+				std::unordered_set<int> v_detections_m1 = computeRemainingDetections(v_detections, parent->identity);
 
                 // Get leaf children
                 std::vector<EHMNetNodePtr> leaves = net->getNodesByLayer(-1);
-                EHMNetNodePtr child;
-                if (leaves.size() > 0)
-                    child = *leaves.begin();
+                EHMNetNodePtr child = leaves.empty() ? nullptr : *leaves.begin();
 
                 // For each valid detection
                 for (int j : v_detections_m1) {
@@ -167,9 +158,7 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
         else {
             double weight = 0;
             std::set<int> v_detections_tmp = valid_detections_per_track[parent->layer];
-            std::set<int> v_detections;
-            std::set_difference(v_detections_tmp.begin(), v_detections_tmp.end(), parent->identity.begin(), parent->identity.end(),
-                std::inserter(v_detections, v_detections.begin()));
+			std::unordered_set<int> v_detections = computeRemainingDetections(v_detections_tmp, parent->identity);
             for (int detection : v_detections) {
                 std::vector<EHMNetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
                 double weight_det = likelihood_matrix(parent->layer, detection);
@@ -192,9 +181,7 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
         }
         int p_i = parent->id;
         std::set<int> v_detections_tmp = valid_detections_per_track[parent->layer];
-        std::set<int> v_detections;
-        std::set_difference(v_detections_tmp.begin(), v_detections_tmp.end(), parent->identity.begin(), parent->identity.end(),
-            std::inserter(v_detections, v_detections.begin()));
+		std::unordered_set<int> v_detections = computeRemainingDetections(v_detections_tmp, parent->identity);
         for (int detection : v_detections) {
             const std::vector<EHMNetNodePtr>& v_children = net->getChildrenPerDetection(parent, detection);
             std::set<int> v_children_inds;
@@ -222,9 +209,7 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
         std::set<int> v_detections_tmp = valid_detections_per_track[track];
         for (auto& parent : net->getNodesByLayer(track)) {
             std::set<int> v_detections_tmp = valid_detections_per_track[parent->layer];
-            std::set<int> v_detections;
-            std::set_difference(v_detections_tmp.begin(), v_detections_tmp.end(), parent->identity.begin(), parent->identity.end(),
-                std::inserter(v_detections, v_detections.begin()));
+			std::unordered_set<int> v_detections = computeRemainingDetections(v_detections_tmp, parent->identity);
             for (int detection : v_detections) {
                 std::vector<EHMNetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
                 if (v_children.empty()) {

@@ -71,16 +71,16 @@ PYBIND11_MODULE(_pyehm, m) {
     // Algorithms
     py::class_<EHM>(core_m, "EHM", docstrings::EHM().c_str())
         .def(py::init<>())
-        .def_static("construct_net", &EHM::constructNet, "validation_matrix"_a, docstrings::EHM_construct_net().c_str())
-        .def_static("construct_tree", &EHM::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def_static("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
-        .def_static("run", &EHM::run, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM_run().c_str());
+        .def("construct_net", &EHM::constructNet, "validation_matrix"_a, docstrings::EHM_construct_net().c_str())
+        .def("construct_tree", &EHM::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
+        .def("run", &EHM::run, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM_run().c_str());
     py::class_<EHM2>(core_m, "EHM2", docstrings::EHM2().c_str())
         .def(py::init<>())
-        .def_static("construct_net", &EHM2::constructNet, "validation_matrix"_a, docstrings::EHM2_construct_net().c_str())
-        .def_static("construct_tree", &EHM2::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def_static("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
-        .def_static("run", &EHM2::run, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM2_run().c_str());
+        .def("construct_net", &EHM2::constructNet, "validation_matrix"_a, docstrings::EHM2_construct_net().c_str())
+        .def("construct_tree", &EHM2::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
+        .def("run", &EHM2::run, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM2_run().c_str());
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

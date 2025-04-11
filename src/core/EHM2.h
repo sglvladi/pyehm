@@ -19,7 +19,7 @@ class EHM2: public EHM
 {
 public:
     EHM2();
-    static EHM2TreePtr constructTree(const Eigen::MatrixXi& validation_matrix);
+    EHM2TreePtr constructTree(const Eigen::MatrixXi& validation_matrix) override;
 };
 
 } // namespace core

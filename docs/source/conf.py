@@ -24,8 +24,8 @@ copyright = '2021-2023, Lyudmil Vladimirov'
 author = 'Lyudmil Vladimirov'
 
 # The full version, including alpha/beta/rc tags.
-from pkg_resources import get_distribution
-version = release = get_distribution('pyehm').version
+from importlib.metadata import version as get_version
+version = release = get_version('pyehm')
 
 
 # -- General configuration ---------------------------------------------------

@@ -4,6 +4,6 @@ from importlib.metadata import version, PackageNotFoundError
 
 try:
     __version__ = version("pyehm")
-except PackageNotFoudError:
+except PackageNotFoundError:
     # package is not installed
     pass

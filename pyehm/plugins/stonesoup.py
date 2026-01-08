@@ -47,7 +47,7 @@ class JPDAWithEHM(JPDA):
 
     @staticmethod
     def _run_ehm(validation_matrix, likelihood_matrix):
-        return EHM.run(validation_matrix, likelihood_matrix)
+        return EHM().run(validation_matrix, likelihood_matrix)
 
     @staticmethod
     def _calc_validation_and_likelihood_matrices(tracks, detections, hypotheses):
@@ -158,5 +158,5 @@ class JPDAWithEHM2(JPDAWithEHM):
 
     @staticmethod
     def _run_ehm(validation_matrix, likelihood_matrix):
-        assoc_prob_matrix = EHM2.run(validation_matrix, likelihood_matrix)
+        assoc_prob_matrix = EHM2().run(validation_matrix, likelihood_matrix)
         return assoc_prob_matrix

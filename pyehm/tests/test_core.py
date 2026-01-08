@@ -24,7 +24,7 @@ def test_ehm_run(scenario_name, ehm_class, scenarios):
     expected_result = jpda_naive(validation_matrix, likelihood_matrix)
 
     # Run EHM
-    result = ehm_class.run(validation_matrix, likelihood_matrix)
+    result = ehm_class().run(validation_matrix, likelihood_matrix)
     assert np.allclose(result, expected_result)
 
 
@@ -42,7 +42,7 @@ def test_ehm_run_random(num_tracks, num_detections):
     for _ in range(10):
         validation_matrix, likelihood_matrix = gen_random_scenario(num_tracks, num_detections)
         expected_result = jpda_naive(validation_matrix, likelihood_matrix)
-        ehm1_result = EHM.run(validation_matrix, likelihood_matrix)
-        ehm2_result = EHM2.run(validation_matrix, likelihood_matrix)
+        ehm1_result = EHM().run(validation_matrix, likelihood_matrix)
+        ehm2_result = EHM2().run(validation_matrix, likelihood_matrix)
         assert np.allclose(expected_result, ehm1_result)
         assert np.allclose(expected_result, ehm2_result)

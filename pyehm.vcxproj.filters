@@ -30,13 +30,7 @@
     <ClCompile Include="src\utils\Cluster.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\net\EHM2Net.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\net\EHM2NetNode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\net\EHM2Tree.cpp">
+    <ClCompile Include="src\net\EHMTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\net\EHMNet.cpp">
@@ -983,13 +977,7 @@
     <ClInclude Include="src\utils\Cluster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\net\EHM2Net.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\net\EHM2NetNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\net\EHM2Tree.h">
+    <ClInclude Include="src\net\EHMTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\net\EHMNet.h">
@@ -1018,5 +1006,9 @@
     <None Include="docs\build\_modules\pyehm\core.html" />
     <None Include="docs\build\_modules\pyehm\utils.html" />
     <None Include="docs\build\_modules\pyehm\plugins\stonesoup.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="visualisers\Eigen.natvis" />
+    <Natvis Include="visualisers\stl.natvis" />
   </ItemGroup>
 </Project>

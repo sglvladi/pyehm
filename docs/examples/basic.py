@@ -58,10 +58,10 @@ likelihood_matrix = np.array([[0.1, 0.9, 0, 0, 0],
 
 from pyehm.core import EHM, EHM2
 
-assoc_matrix_ehm = EHM.run(validation_matrix, likelihood_matrix)
+assoc_matrix_ehm = EHM().run(validation_matrix, likelihood_matrix)
 print('assoc_matrix_ehm =\n {}\n'.format(assoc_matrix_ehm))
 # or
-assoc_matrix_ehm2 = EHM2.run(validation_matrix, likelihood_matrix)
+assoc_matrix_ehm2 = EHM2().run(validation_matrix, likelihood_matrix)
 print('assoc_matrix_ehm2 =\n {}'.format(assoc_matrix_ehm2))
 
 # %%

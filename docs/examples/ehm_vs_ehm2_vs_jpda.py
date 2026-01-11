@@ -65,10 +65,10 @@ likelihood_matrix = np.array([[0.9, 0.13, 0.1, 0, 0.97, 0, 0.94, 0.55, 0, 0],
 #
 
 # Net constructed using EHM
-net1 = EHM.construct_net(validation_matrix)
+net1 = EHM().construct_net(validation_matrix)
 
 # Net constructed using EHM2
-net2 = EHM2.construct_net(validation_matrix)
+net2 = EHM2().construct_net(validation_matrix)
 
 print('No. of nodes in EHM net: {}'.format(net1.num_nodes))
 print('No. of nodes in EHM2 net: {}'.format(net2.num_nodes))
@@ -146,12 +146,12 @@ def is_valid_hyp(joint_hyp):
 
 # EHM
 now = datetime.datetime.now()
-assoc_matrix_ehm = EHM.run(validation_matrix, likelihood_matrix)
+assoc_matrix_ehm = EHM().run(validation_matrix, likelihood_matrix)
 dt_ehm = datetime.datetime.now() - now
 
 # EHM2
 now = datetime.datetime.now()
-assoc_matrix_ehm2 = EHM2.run(validation_matrix, likelihood_matrix)
+assoc_matrix_ehm2 = EHM2().run(validation_matrix, likelihood_matrix)
 dt_ehm2 = datetime.datetime.now() - now
 
 # Standard JPDA

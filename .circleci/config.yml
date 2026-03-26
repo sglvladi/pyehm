@@ -7,6 +7,8 @@ workflows:
       - python-310
       - python-311
       - python-312
+      - python-313
+      - python-314
 jobs:
   python-39: &test-template
     docker:
@@ -56,3 +58,11 @@ jobs:
     <<: *test-template
     docker:
       - image: cimg/python:3.12
+  python-313:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.13
+  python-314:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.14

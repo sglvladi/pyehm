@@ -2,10 +2,19 @@ name: Wheels
 
 on:
   workflow_dispatch:
+
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+
   push:
     branches:
       - main
+
   release:
     types:
       - published
@@ -63,3 +72,41 @@ jobs:
         with:
           name: cibw-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
+
+  upload_test_pypi:
+    name: Publish to TestPyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'publish-testpypi')
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  upload_pypi:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -10,10 +10,10 @@ EHM2::EHM2()
 {
 }
 
-EHMTreePtr EHM2::constructTree(const Eigen::MatrixXd& likelihood_matrix)
+EHMTreePtr EHM2::constructTree(const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    int num_tracks = likelihood_matrix.rows();
-    int num_detections = likelihood_matrix.cols();
+    int num_tracks = log_likelihood_matrix.rows();
+    int num_detections = log_likelihood_matrix.cols();
 
     std::vector<EHMTreePtr> trees;
 
@@ -22,7 +22,7 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXd& likelihood_matrix)
         std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
-            if (likelihood_matrix(i, detection) != 0)
+            if (log_likelihood_matrix(i, detection) != LOG_ZERO)
             {
                 v_detections.push_back(detection);
             }

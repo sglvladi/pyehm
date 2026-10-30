@@ -19,17 +19,18 @@ identity: :class:`set` of :class:`int`
 
     std::string EHMNet()
     {
-        return R"(EHMNet(root: EHMNetNode, likelihood_matrix: numpy.ndarray, tree: EHMTree)
+        return R"(EHMNet(root: EHMNetNode, log_likelihood_matrix: numpy.ndarray, tree: EHMTree)
 Represents the nets constructed by :class:`~.EHM`.
 
 Parameters
 ----------
 root: :class:`~.EHMNetNode`
     The net root node.
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 tree: :class:`~.EHMTree`
     The tree representing the net layers structure.
 )";
@@ -37,7 +38,7 @@ tree: :class:`~.EHMTree`
 
     std::string EHMNet___init__()
     {
-        return R"(__init__(root: pyehm.net.EHMNetNode, likelihood_matrix: numpy.ndarray, tree: pyehm.net.EHMTree)";
+        return R"(__init__(root: pyehm.net.EHMNetNode, log_likelihood_matrix: numpy.ndarray, tree: pyehm.net.EHMTree)";
     }
 
     std::string EHMNet_num_layers()
@@ -128,7 +129,7 @@ detections: :class:`set` of :class:`int`
 
     std::string Cluster()
     {
-        return R"(Cluster(tracks: List[int], detections: List[int] = [], likelihood_matrix: numpy.ndarray = numpy.array([]))
+        return R"(Cluster(tracks: List[int], detections: List[int] = [], log_likelihood_matrix: numpy.ndarray = numpy.array([]))
 A cluster of tracks sharing common detections.
 
 Parameters
@@ -137,22 +138,23 @@ tracks: :class:`list` of `int`
     Indices of tracks in cluster
 detections: :class:`list` of `int`
     Indices of detections in cluster. Defaults to an empty list.
-likelihood_matrix: :class:`numpy.ndarray`
-    The likelihood matrix for tracks and detections in the cluster. Defaults to an empty array.
+log_likelihood_matrix: :class:`numpy.ndarray`
+    The log-likelihood matrix for tracks and detections in the cluster. Defaults to an empty array.
 )";
     }
 
     std::string gen_clusters()
     {
-        return R"(gen_clusters(likelihood_matrix: numpy.ndarray) -> List[Cluster]
+        return R"(gen_clusters(log_likelihood_matrix: numpy.ndarray) -> List[Cluster]
 Cluster tracks into groups sharing detections
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 )";
     }
 
@@ -166,15 +168,16 @@ An implementation of the EHM algorithm, as documented in [EHM1]_.
 
     std::string EHM_construct_net()
     {
-        return R"(construct_net(likelihood_matrix: numpy.ndarray) -> EHMNet
+        return R"(construct_net(log_likelihood_matrix: numpy.ndarray) -> EHMNet
 Construct the EHM net as per Section 3.1 of [EHM1]_
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 
 Returns
 -------
@@ -185,15 +188,16 @@ Returns
 
     std::string EHM_construct_tree()
     {
-        return R"(construct_tree(likelihood_matrix: numpy.ndarray) -> EHMTree
+        return R"(construct_tree(log_likelihood_matrix: numpy.ndarray) -> EHMTree
 Construct the EHM tree as per section 4.3 of [EHM2]_
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 Returns
 -------
 : :class:`~.EHMTree`
@@ -203,43 +207,44 @@ Returns
 
     std::string EHM_compute_association_probabilities()
     {
-        return R"(compute_association_probabilities(net: EHMNet, likelihood_matrix: numpy.ndarray) -> numpy.ndarray
+        return R"(compute_association_probabilities(net: EHMNet, log_likelihood_matrix: numpy.ndarray) -> numpy.ndarray
 Compute the joint association weights, as described in Section 3.3 of [EHM1]_
 
 Parameters
 ----------
 net: :class:`~.EHMNet`
     A net object representing the valid joint association hypotheses
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
     to the null hypothesis.
 
 Returns
 -------
 :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the normalised
-    association probabilities for all combinations of tracks and detecrtons. The first
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the normalised
+    association probabilities for all combinations of tracks and detections. The first
     column corresponds to the null hypothesis.
 )";
     }
 
     std::string EHM_run()
     {
-        return R"(run(likelihood_matrix: numpy.ndarray) -> numpy.ndarray
-Run EHM to compute and return association probabilities
+        return R"(run(log_likelihood_matrix: numpy.ndarray) -> numpy.ndarray
+Run EHM to compute and return log association probabilities
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 
 Returns
 -------
 :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the normalised
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the normalised
     association probabilities for all combinations of tracks and detections. The first
     column corresponds to the null hypothesis.
 )";
@@ -255,15 +260,16 @@ An implementation of the EHM2 algorithm, as documented in [EHM2]_.
 
     std::string EHM2_construct_net()
     {
-        return R"(construct_net(likelihood_matrix: numpy.ndarray) -> EHMNet
+        return R"(construct_net(log_likelihood_matrix: numpy.ndarray) -> EHMNet
 Construct the EHM2 net as per Section 4 of [EHM2]_
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 Returns
 -------
 : :class:`~.EHMNet`
@@ -273,15 +279,16 @@ Returns
 
     std::string EHM2_construct_tree()
     {
-        return R"(construct_tree(likelihood_matrix: numpy.ndarray) -> EHMTree
+        return R"(construct_tree(log_likelihood_matrix: numpy.ndarray) -> EHMTree
 Construct the EHM2 tree as per section 4.3 of [EHM2]_
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 Returns
 -------
 : :class:`~.EHMTree`
@@ -291,42 +298,43 @@ Returns
 
     std::string EHM2_compute_association_probabilities()
     {
-        return R"(compute_association_probabilities(net: EHMNet, likelihood_matrix: numpy.ndarray) -> numpy.ndarray
+        return R"(compute_association_probabilities(net: EHMNet, log_likelihood_matrix: numpy.ndarray) -> numpy.ndarray
 Compute the joint association weights, as described in Section 4.2 of [EHM2]_
 
 Parameters
 ----------
 net: :class:`~.EHMNet`
     A net object representing the valid joint association hypotheses
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
     to the null hypothesis.
 Returns
 -------
 :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the normalised
-    association probabilities for all combinations of tracks and detecrtons. The first
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the normalised
+    association probabilities for all combinations of tracks and detections. The first
     column corresponds to the null hypothesis.
 )";
     }
 
     std::string EHM2_run()
     {
-        return R"(run(likelihood_matrix: numpy.ndarray) -> numpy.ndarray
-Run EHM2 to compute and return association probabilities
+        return R"(run(log_likelihood_matrix: numpy.ndarray) -> numpy.ndarray
+Run EHM2 to compute and return log association probabilities
 
 Parameters
 ----------
-likelihood_matrix: :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+log_likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
     likelihoods for all combinations of tracks and detections. The first column corresponds
-    to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+    to the null hypothesis. Entries equal to ``-numpy.inf`` (i.e. zero likelihood) denote invalid
+    (i.e. impossible) associations.
 
 Returns
 -------
 :class:`numpy.ndarray`
-    A matrix of shape (num_tracks, num_detections + 1) containing the normalised
+    A matrix of shape (num_tracks, num_detections + 1) containing the log of the normalised
     association probabilities for all combinations of tracks and detections. The first
     column corresponds to the null hypothesis.
 )";

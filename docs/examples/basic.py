@@ -11,11 +11,12 @@ import numpy as np
 # Formulating the possible associations between targets and measurements
 # ----------------------------------------------------------------------
 #
-# Both :class:`~.EHM` and :class:`~.EHM2` operate on a ``likelihood_matrix``, which contains the
+# Both :class:`~.EHM` and :class:`~.EHM2` operate on a ``log_likelihood_matrix``, which contains the log of the
 # likelihoods/probabilities of the possible associations between different targets and measurements. The matrix
 # has a shape ``(N_T, N_M+1)``, where ``N_T`` is the number of targets and ``N_M`` is the number of measurements.
 # Associations that are not possible (e.g. measurements that fall outside the gate of a target) are denoted by
-# zero entries.
+# ``-np.inf`` entries (i.e. zero likelihood). Working with logs avoids numerical underflow when multiplying
+# many small likelihoods together.
 #
 # For example, assume we have the following scenario of 4 targets and 4 measurements (taken from Section 4.4 of
 # [EHM2]_):
@@ -43,22 +44,29 @@ likelihood_matrix = np.array([[0.1, 0.9, 0, 0, 0],
                               [0.2, 0, 0, 0.75, 0.05]])
 
 # %%
+# The corresponding ``log_likelihood_matrix`` is simply the element-wise log of the above, where the zero entries
+# become ``-np.inf``:
+
+with np.errstate(divide='ignore'):
+    log_likelihood_matrix = np.log(likelihood_matrix)
+
+# %%
 # Computing joint association probabilities
 # -----------------------------------------
-# Based on the above, we can use :class:`~.EHM` or :class:`~.EHM2` to compute the joint association probabilities
-# matrix ``assoc_matrix`` as follows:
+# Based on the above, we can use :class:`~.EHM` or :class:`~.EHM2` to compute the matrix of log joint association
+# probabilities ``log_assoc_matrix``, and take its exponential to get the probabilities themselves:
 
 from pyehm.core import EHM, EHM2
 
-assoc_matrix_ehm = EHM().run(likelihood_matrix)
-print('assoc_matrix_ehm =\n {}\n'.format(assoc_matrix_ehm))
+log_assoc_matrix_ehm = EHM().run(log_likelihood_matrix)
+print('assoc_matrix_ehm =\n {}\n'.format(np.exp(log_assoc_matrix_ehm)))
 # or
-assoc_matrix_ehm2 = EHM2().run(likelihood_matrix)
-print('assoc_matrix_ehm2 =\n {}'.format(assoc_matrix_ehm2))
+log_assoc_matrix_ehm2 = EHM2().run(log_likelihood_matrix)
+print('assoc_matrix_ehm2 =\n {}'.format(np.exp(log_assoc_matrix_ehm2)))
 
 # %%
 # Note that both :class:`~.EHM` and :class:`~.EHM2` should produce the same results, although :class:`~.EHM2` should,
 # in principle, be significantly faster for large numbers of targets and measurements.
 
 # Check if the probability matrices produced by EHM and EHM2 are equal
-print(np.allclose(assoc_matrix_ehm, assoc_matrix_ehm2))
+print(np.allclose(np.exp(log_assoc_matrix_ehm), np.exp(log_assoc_matrix_ehm2)))

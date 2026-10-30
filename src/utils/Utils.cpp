@@ -21,14 +21,14 @@ Eigen::MatrixXi getNumIntersectsTable(const std::vector<std::pair<std::vector<in
 	return num_intersects_table;
 }
 
-std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& likelihood_matrix)
+std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    // Likelihood matrix for all detections except null
-    auto likelihood_matrix_true = likelihood_matrix(Eigen::all, Eigen::seqN(1, Eigen::last));
+    // Log-likelihood matrix for all detections except null
+    auto log_likelihood_matrix_true = log_likelihood_matrix(Eigen::all, Eigen::seqN(1, Eigen::last));
 
     // Initiate parameters
-    int num_tracks = likelihood_matrix_true.rows();
-    int num_detections = likelihood_matrix_true.cols();
+    int num_tracks = log_likelihood_matrix_true.rows();
+    int num_detections = log_likelihood_matrix_true.cols();
 
     // Form clusters of tracks sharing measurements
     std::set<int> missed_tracks;
@@ -41,7 +41,7 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& likelihood_matrix)
 		cluster.first.push_back(i);
 		for (int j = 0; j < num_detections; j++)
 		{
-			if (likelihood_matrix_true(i, j) != 0)
+			if (log_likelihood_matrix_true(i, j) != LOG_ZERO)
 			{
 				cluster.second.insert(j+1);
 			}
@@ -81,8 +81,8 @@ std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& likelihood_matrix)
 		}
 		clust.second.insert(0);
 		std::vector<int> v_detections_vec(clust.second.begin(), clust.second.end());
-		Eigen::MatrixXd c_likelihood_matrix = likelihood_matrix(clust.first, v_detections_vec);
-		ClusterPtr cluster = std::make_shared<Cluster>(Cluster(clust.first, v_detections_vec, c_likelihood_matrix));
+		Eigen::MatrixXd c_log_likelihood_matrix = log_likelihood_matrix(clust.first, v_detections_vec);
+		ClusterPtr cluster = std::make_shared<Cluster>(Cluster(clust.first, v_detections_vec, c_log_likelihood_matrix));
 		clusters_obj.push_back(cluster);
 	}
 

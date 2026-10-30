@@ -42,8 +42,8 @@ PYBIND11_MODULE(_pyehm, m) {
 
     // Nets
     py::class_<EHMNet, EHMNetPtr>(net_m, "EHMNet", docstrings::EHMNet().c_str())
-        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXd&, const EHMTreePtr>(), "root"_a, "likelihood_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
-        .def_readonly("likelihood_matrix", &EHMNet::likelihood_matrix)
+        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXd&, const EHMTreePtr>(), "root"_a, "log_likelihood_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
+        .def_readonly("log_likelihood_matrix", &EHMNet::log_likelihood_matrix)
         .def_property_readonly("num_layers", &EHMNet::getNumLayers, docstrings::EHMNet_num_layers().c_str())
         .def_property_readonly("num_nodes", &EHMNet::getNumNodes, docstrings::EHMNet_num_nodes().c_str())
         .def_property_readonly("root", &EHMNet::getRoot, docstrings::EHMNet_root().c_str())
@@ -62,31 +62,31 @@ PYBIND11_MODULE(_pyehm, m) {
 
     // Utils
     py::class_<Cluster, ClusterPtr>(utils_m, "Cluster", docstrings::Cluster().c_str())
-        .def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
+        .def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "log_likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
         .def_readwrite("tracks", &Cluster::tracks)
         .def_readwrite("detections", &Cluster::detections)
-        .def_readwrite("likelihood_matrix", &Cluster::likelihood_matrix);
-    utils_m.def("gen_clusters", &genClusters, "likelihood_matrix"_a, docstrings::gen_clusters().c_str());
+        .def_readwrite("log_likelihood_matrix", &Cluster::log_likelihood_matrix);
+    utils_m.def("gen_clusters", &genClusters, "log_likelihood_matrix"_a, docstrings::gen_clusters().c_str());
 
     // Algorithms
     py::class_<EHM>(core_m, "EHM", docstrings::EHM().c_str())
         .def(py::init<>())
-        .def("construct_net", &EHM::constructNet, "likelihood_matrix"_a, docstrings::EHM_construct_net().c_str())
-        .def("construct_tree", &EHM::constructTree, "likelihood_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
-        .def("run", [](EHM& self, const Eigen::MatrixXd& likelihood_matrix) ->  Eigen::MatrixXd { 
+        .def("construct_net", &EHM::constructNet, "log_likelihood_matrix"_a, docstrings::EHM_construct_net().c_str())
+        .def("construct_tree", &EHM::constructTree, "log_likelihood_matrix"_a, docstrings::EHM2_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "log_likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
+        .def("run", [](EHM& self, const Eigen::MatrixXd& log_likelihood_matrix) ->  Eigen::MatrixXd { 
             py::gil_scoped_release release;
-            return self.run(likelihood_matrix); 
-        }, "likelihood_matrix"_a, docstrings::EHM_run().c_str());
+            return self.run(log_likelihood_matrix); 
+        }, "log_likelihood_matrix"_a, docstrings::EHM_run().c_str());
     py::class_<EHM2>(core_m, "EHM2", docstrings::EHM2().c_str())
         .def(py::init<>())
-        .def("construct_net", &EHM2::constructNet, "likelihood_matrix"_a, docstrings::EHM2_construct_net().c_str())
-        .def("construct_tree", &EHM2::constructTree, "likelihood_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
-        .def("run", [](EHM2& self, const Eigen::MatrixXd& likelihood_matrix) ->  Eigen::MatrixXd {
+        .def("construct_net", &EHM2::constructNet, "log_likelihood_matrix"_a, docstrings::EHM2_construct_net().c_str())
+        .def("construct_tree", &EHM2::constructTree, "log_likelihood_matrix"_a, docstrings::EHM2_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "log_likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
+        .def("run", [](EHM2& self, const Eigen::MatrixXd& log_likelihood_matrix) ->  Eigen::MatrixXd {
             py::gil_scoped_release release;
-            return self.run(likelihood_matrix);
-        }, "likelihood_matrix"_a, docstrings::EHM2_run().c_str());
+            return self.run(log_likelihood_matrix);
+        }, "log_likelihood_matrix"_a, docstrings::EHM2_run().c_str());
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

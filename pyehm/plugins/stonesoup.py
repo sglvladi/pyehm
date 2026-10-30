@@ -46,12 +46,12 @@ class JPDAWithEHM(JPDA):
         return multi_hypotheses
 
     @staticmethod
-    def _run_ehm(likelihood_matrix):
-        return EHM().run(likelihood_matrix)
+    def _run_ehm(log_likelihood_matrix):
+        return EHM().run(log_likelihood_matrix)
 
     @staticmethod
-    def _calc_likelihood_matrix(tracks, detections, hypotheses):
-        """ Compute the likelihood matrix
+    def _calc_log_likelihood_matrix(tracks, detections, hypotheses):
+        """ Compute the log-likelihood matrix
 
         Parameters
         ----------
@@ -65,29 +65,32 @@ class JPDAWithEHM(JPDA):
         Returns
         -------
         :class:`numpy.ndarray`
-            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+            A matrix of shape (num_tracks, num_detections + 1) containing the log of the unnormalised
             likelihoods for all combinations of tracks and detections. The first column corresponds
-            to the null hypothesis. Zero entries denote invalid (i.e. impossible) associations.
+            to the null hypothesis. Entries equal to ``-numpy.inf`` denote invalid (i.e. impossible)
+            associations.
         """
 
         # Ensure tracks and detections are lists (not sets)
         tracks, detections = list(tracks), list(detections)
 
-        # Construct likelihood matrix
+        # Construct log-likelihood matrix
         # The matrix has shape (num_tracks, num_detections + 1), where the first column
         # corresponds to the null hypothesis.
         num_tracks, num_detections = len(tracks), len(detections)
-        likelihood_matrix = np.zeros((num_tracks, num_detections + 1))
+        # NOTE: Weights are converted via their log value, since converting them to float can
+        # underflow to zero for very small likelihoods.
+        log_likelihood_matrix = np.full((num_tracks, num_detections + 1), -np.inf)
         for i, track in enumerate(tracks):
             for hyp in hypotheses[track]:
                 if not hyp:
-                    likelihood_matrix[i, 0] = hyp.weight
+                    log_likelihood_matrix[i, 0] = Probability(hyp.weight).log_value
                 else:
                     j = next(d_i for d_i, detection in enumerate(detections)
                              if hyp.measurement == detection)
-                    likelihood_matrix[i, j + 1] = hyp.weight
+                    log_likelihood_matrix[i, j + 1] = Probability(hyp.weight).log_value
 
-        return likelihood_matrix
+        return log_likelihood_matrix
 
     @classmethod
     def _compute_multi_hypotheses(cls, tracks, detections, hypotheses, time):
@@ -96,11 +99,11 @@ class JPDAWithEHM(JPDA):
         track_list = list(tracks)
         detection_list = list(detections)
 
-        # Calculate likelihood matrix
-        likelihood_matrix = cls._calc_likelihood_matrix(track_list, detection_list, hypotheses)
+        # Calculate log-likelihood matrix
+        log_likelihood_matrix = cls._calc_log_likelihood_matrix(track_list, detection_list, hypotheses)
 
         # Run EHM
-        assoc_prob_matrix = cls._run_ehm(likelihood_matrix)
+        log_assoc_prob_matrix = cls._run_ehm(log_likelihood_matrix)
 
         # Calculate MultiMeasurementHypothesis for each Track over all
         # available Detections with probabilities drawn from the association matrix
@@ -112,7 +115,7 @@ class JPDAWithEHM(JPDA):
 
             # Null measurement hypothesis
             null_hypothesis = next((hyp for hyp in hypotheses[track] if not hyp), None)
-            prob_misdetect = Probability(assoc_prob_matrix[i, 0])
+            prob_misdetect = Probability(log_assoc_prob_matrix[i, 0], log_value=True)
             single_measurement_hypotheses.append(
                 SingleProbabilityHypothesis(
                     null_hypothesis.prediction,
@@ -129,7 +132,7 @@ class JPDAWithEHM(JPDA):
                 j = next(d_i+1 for d_i, detection in enumerate(detection_list)
                          if hypothesis.measurement == detection)
 
-                pro_detect_assoc = Probability(assoc_prob_matrix[i, j])
+                pro_detect_assoc = Probability(log_assoc_prob_matrix[i, j], log_value=True)
                 single_measurement_hypotheses.append(
                     SingleProbabilityHypothesis(
                         hypothesis.prediction,
@@ -151,6 +154,5 @@ class JPDAWithEHM2(JPDAWithEHM):
     """
 
     @staticmethod
-    def _run_ehm(likelihood_matrix):
-        assoc_prob_matrix = EHM2().run(likelihood_matrix)
-        return assoc_prob_matrix
+    def _run_ehm(log_likelihood_matrix):
+        return EHM2().run(log_likelihood_matrix)

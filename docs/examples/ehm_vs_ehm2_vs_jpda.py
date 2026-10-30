@@ -17,8 +17,8 @@ Standard JPDA vs EHM vs EHM2
 #
 # In this example we will be comparing the computational performance of the :class:`~.EHM` and :class:`~.EHM2`, against
 # a naive implementation of JPDA, for a relatively dense scenario of 11 targets and 9 measurements. The
-# likelihood matrix for this scenario is defined below (For more information on how this matrix is defined, see
-# the :ref:`sphx_glr_auto_examples_basic.py`):
+# likelihood matrix for this scenario, and its log, are defined below (For more information on how these
+# matrices are defined, see the :ref:`sphx_glr_auto_examples_basic.py`):
 
 import itertools
 import datetime
@@ -37,6 +37,9 @@ likelihood_matrix = np.array([[0.9, 0.13, 0.1, 0, 0.97, 0, 0.94, 0.55, 0, 0],   
                               [0.62, 0, 0, 0.19, 0.17, 0.31, 0.69, 0.89, 0.63, 0],   # 8  -> 0,3,4,5,6,7,8
                               [0.44, 0, 0, 0, 0.53, 0, 0.49, 0.01, 0.31, 0],         # 9  -> 0,4,6,7,8
                               [0.32, 0, 0.56, 0, 0, 0, 0, 0, 0, 0.23]])              # 10 -> 0,2,9
+with np.errstate(divide='ignore'):
+    log_likelihood_matrix = np.log(likelihood_matrix)
+
 # %%
 # EHM vs EHM 2
 # ------------
@@ -53,10 +56,10 @@ likelihood_matrix = np.array([[0.9, 0.13, 0.1, 0, 0.97, 0, 0.94, 0.55, 0, 0],   
 #
 
 # Net constructed using EHM
-net1 = EHM().construct_net(likelihood_matrix)
+net1 = EHM().construct_net(log_likelihood_matrix)
 
 # Net constructed using EHM2
-net2 = EHM2().construct_net(likelihood_matrix)
+net2 = EHM2().construct_net(log_likelihood_matrix)
 
 print('No. of nodes in EHM net: {}'.format(net1.num_nodes))
 print('No. of nodes in EHM2 net: {}'.format(net2.num_nodes))
@@ -134,12 +137,12 @@ def is_valid_hyp(joint_hyp):
 
 # EHM
 now = datetime.datetime.now()
-assoc_matrix_ehm = EHM().run(likelihood_matrix)
+assoc_matrix_ehm = np.exp(EHM().run(log_likelihood_matrix))
 dt_ehm = datetime.datetime.now() - now
 
 # EHM2
 now = datetime.datetime.now()
-assoc_matrix_ehm2 = EHM2().run(likelihood_matrix)
+assoc_matrix_ehm2 = np.exp(EHM2().run(log_likelihood_matrix))
 dt_ehm2 = datetime.datetime.now() - now
 
 # Standard JPDA

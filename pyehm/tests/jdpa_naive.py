@@ -2,6 +2,12 @@ import itertools
 import numpy as np
 
 
+def to_log(likelihood_matrix):
+    """Take the log of a likelihood matrix, mapping zero (invalid) entries to -inf"""
+    with np.errstate(divide='ignore'):
+        return np.log(likelihood_matrix)
+
+
 def jpda_naive(likelihood_matrix):
     num_tracks, num_detections = likelihood_matrix.shape
 

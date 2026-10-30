@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 
 from ..utils import Cluster, gen_clusters
+from .jdpa_naive import to_log
 
 
 @pytest.mark.parametrize(
@@ -60,11 +61,13 @@ def test_clustering(gating_mask, val_clusters):
         liks = np.random.rand(num_detections) + 0.01  # strictly positive
         likelihood_matrix[i, :] = gating_mask[i, :] * liks
 
-    clusters = gen_clusters(likelihood_matrix)
+    log_likelihood_matrix = to_log(likelihood_matrix)
+
+    clusters = gen_clusters(log_likelihood_matrix)
     assert len(clusters) == len(val_clusters)
     for cluster, val_cluster in zip(clusters, val_clusters):
         assert cluster.tracks == val_cluster.tracks
         assert cluster.detections == val_cluster.detections
         if len(cluster.detections):
-            assert np.array_equal(cluster.likelihood_matrix,
-                                  likelihood_matrix[cluster.tracks, :][:, cluster.detections])
+            assert np.array_equal(cluster.log_likelihood_matrix,
+                                  log_likelihood_matrix[cluster.tracks, :][:, cluster.detections])

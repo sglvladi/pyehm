@@ -12,12 +12,10 @@ class Cluster
 {
 public:
     Cluster(std::vector<int> tracks);
-    Cluster(std::vector<int> tracks, std::vector<int> detections, Eigen::MatrixXi validation_matrix);
-    Cluster(std::vector<int> tracks, std::vector<int> detections, Eigen::MatrixXi validation_matrix, Eigen::MatrixXd likelihood_matrix);
+    Cluster(std::vector<int> tracks, std::vector<int> detections, Eigen::MatrixXd likelihood_matrix);
     
     std::vector<int> tracks;
     std::vector<int> detections;
-    Eigen::MatrixXi validation_matrix;
     Eigen::MatrixXd likelihood_matrix;
 };
 

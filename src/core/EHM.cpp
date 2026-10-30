@@ -10,19 +10,19 @@ EHM::EHM()
 {
 }
 
-EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
+EHMNetPtr EHM::constructNet(const Eigen::MatrixXd& likelihood_matrix)
 {
 	// Cache number of tracks and detections
-    int num_tracks = validation_matrix.rows();
-    int num_detections = validation_matrix.cols();
+    int num_tracks = likelihood_matrix.rows();
+    int num_detections = likelihood_matrix.cols();
 
     // Construct tree
-    EHMTreePtr tree = constructTree(validation_matrix);
+    EHMTreePtr tree = constructTree(likelihood_matrix);
     std::vector<EHMTreePtr> nodes = tree->getNodes();
 
     // Initialise net
     EHMNetNodePtr root = std::make_shared<EHMNetNode>(EHMNetNode(0, {}));
-    EHMNetPtr net = std::make_shared<EHMNet>(EHMNet(root, validation_matrix, tree));
+    EHMNetPtr net = std::make_shared<EHMNet>(EHMNet(root, likelihood_matrix, tree));
 
     // Construct net
     std::stack<EHMTreePtr> stack;
@@ -38,7 +38,7 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
         std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++)
         {
-            if (net->validation_matrix(tree->track, detection) == 1)
+            if (net->likelihood_matrix(tree->track, detection) != 0)
             {
                 v_detections.insert(detection);
             }
@@ -140,7 +140,7 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
     for (int i = 0; i < num_tracks; i++) {
         std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++) {
-            if (net->validation_matrix(i, detection) == 1) {
+            if (net->likelihood_matrix(i, detection) != 0) {
                 v_detections.insert(detection);
             }
         }
@@ -229,13 +229,13 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
     return a_matrix;
 }
 
-Eigen::MatrixXd EHM::run(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix)
+Eigen::MatrixXd EHM::run(const Eigen::MatrixXd& likelihood_matrix)
 {
     // Cluster tracks into groups that share common detections
-    std::vector<ClusterPtr> clusters = genClusters(validation_matrix, likelihood_matrix);
+    std::vector<ClusterPtr> clusters = genClusters(likelihood_matrix);
 
     // Initialise the association probabilities matrix
-    Eigen::MatrixXd a_matrix = Eigen::MatrixXd::Zero(validation_matrix.rows(), validation_matrix.cols());
+    Eigen::MatrixXd a_matrix = Eigen::MatrixXd::Zero(likelihood_matrix.rows(), likelihood_matrix.cols());
 
     // Perform EHM for each cluster
     for (ClusterPtr cluster : clusters) {
@@ -248,12 +248,11 @@ Eigen::MatrixXd EHM::run(const Eigen::MatrixXi& validation_matrix, const Eigen::
             continue;
         }
 
-        // Extract validation and likelihood matrices for cluster
-        Eigen::MatrixXi c_validation_matrix = cluster->validation_matrix;
+        // Extract likelihood matrix for cluster
         Eigen::MatrixXd c_likelihood_matrix = cluster->likelihood_matrix;
 
         // Construct the EHM net
-        EHMNetPtr net = constructNet(c_validation_matrix);
+        EHMNetPtr net = constructNet(c_likelihood_matrix);
 
         // Compute the association probabilities
         Eigen::MatrixXd c_a_matrix = computeAssociationMatrix(net, c_likelihood_matrix);
@@ -264,10 +263,10 @@ Eigen::MatrixXd EHM::run(const Eigen::MatrixXi& validation_matrix, const Eigen::
     return a_matrix;
 }
 
-EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
+EHMTreePtr EHM::constructTree(const Eigen::MatrixXd& likelihood_matrix)
 {
-    int num_tracks = validation_matrix.rows();
-    int num_detections = validation_matrix.cols();
+    int num_tracks = likelihood_matrix.rows();
+    int num_detections = likelihood_matrix.cols();
 
     EHMTreePtr tree;
 
@@ -276,7 +275,7 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
-            if (validation_matrix(i, detection) == 1)
+            if (likelihood_matrix(i, detection) != 0)
             {
                 v_detections.push_back(detection);
             }

@@ -26,7 +26,7 @@ def to_nx_graph(obj: Union[EHMNet, EHMTree]) -> nx.Graph:
             track = parent.track if parent.track != -1 else None
             identity = parent.identity
             g.add_node(parent.id, track=track, identity=identity)
-            for detection in range(obj.validation_matrix.shape[1]):
+            for detection in range(obj.likelihood_matrix.shape[1]):
                 children = obj.get_children_per_detection(parent, detection)
                 for child in children:
                     if not g.has_node(child.id):

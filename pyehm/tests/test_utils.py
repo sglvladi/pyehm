@@ -5,7 +5,7 @@ from ..utils import Cluster, gen_clusters
 
 
 @pytest.mark.parametrize(
-    'validation_matrix, val_clusters',
+    'gating_mask, val_clusters',
     [
         # 3 tracks, no detections
         (
@@ -52,21 +52,19 @@ from ..utils import Cluster, gen_clusters
         ),
     ]
 )
-def test_clustering(validation_matrix, val_clusters):
-    # Generate a random likelihood_matrix
-    num_tracks, num_detections = validation_matrix.shape
+def test_clustering(gating_mask, val_clusters):
+    # Generate a random likelihood_matrix that is zero wherever the gating mask is zero
+    num_tracks, num_detections = gating_mask.shape
     likelihood_matrix = np.zeros((num_tracks, num_detections))
     for i in range(num_tracks):
-        liks = np.random.rand(num_detections)
-        likelihood_matrix[i, :] = validation_matrix[i, :] * liks
+        liks = np.random.rand(num_detections) + 0.01  # strictly positive
+        likelihood_matrix[i, :] = gating_mask[i, :] * liks
 
-    clusters = gen_clusters(validation_matrix, likelihood_matrix)
+    clusters = gen_clusters(likelihood_matrix)
     assert len(clusters) == len(val_clusters)
     for cluster, val_cluster in zip(clusters, val_clusters):
         assert cluster.tracks == val_cluster.tracks
         assert cluster.detections == val_cluster.detections
         if len(cluster.detections):
-            assert np.array_equal(cluster.validation_matrix,
-                                  validation_matrix[cluster.tracks, :][:, cluster.detections])
             assert np.array_equal(cluster.likelihood_matrix,
                                   likelihood_matrix[cluster.tracks, :][:, cluster.detections])

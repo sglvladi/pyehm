@@ -5,9 +5,9 @@ namespace ehm
 namespace net
 {
 
-EHMNet::EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXi& validation_matrix, const EHMTreePtr tree)
+EHMNet::EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXd& likelihood_matrix, const EHMTreePtr tree)
 {
-    this->validation_matrix = validation_matrix;
+    this->likelihood_matrix = likelihood_matrix;
     _nodes.push_back(root);
 	_tree = tree;
 

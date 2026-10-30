@@ -20,10 +20,10 @@ using namespace ehm::utils;
 class EHMNet
 {
 public:
-    Eigen::MatrixXi validation_matrix;
+    Eigen::MatrixXd likelihood_matrix;
 
     EHMNet() = default;
-    EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXi& validation_matrix, const EHMTreePtr tree);
+    EHMNet(const EHMNetNodePtr root, const Eigen::MatrixXd& likelihood_matrix, const EHMTreePtr tree);
 
     void addNode(EHMNetNodePtr node, const EHMNetNodePtr parent, const int detection);
     void addEdge(const EHMNetNodePtr& parent, const EHMNetNodePtr& child, const int detection);

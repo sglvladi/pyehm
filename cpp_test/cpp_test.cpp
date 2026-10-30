@@ -205,7 +205,7 @@ int main()
     Eigen::MatrixXd likelihood_matrix = (random_matrix + Eigen::MatrixXd::Ones(19, 19)) / 2.0;
     std::cout << "Started" << std::endl;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    Eigen::MatrixXd a = ehm::core::EHM2().run(validation_matrix, likelihood_matrix);
+    Eigen::MatrixXd a = ehm::core::EHM2().run(likelihood_matrix);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
     std::cout << a;

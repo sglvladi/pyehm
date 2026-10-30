@@ -19,10 +19,10 @@ class EHM
 {
 public:
     EHM();
-    EHMNetPtr constructNet(const Eigen::MatrixXi& validation_matrix);
+    EHMNetPtr constructNet(const Eigen::MatrixXd& likelihood_matrix);
     Eigen::MatrixXd computeAssociationMatrix(const EHMNetPtr net, const Eigen::MatrixXd& likelihood_matrix);
-    Eigen::MatrixXd run(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix);
-    virtual EHMTreePtr constructTree(const Eigen::MatrixXi& validation_matrix);
+    Eigen::MatrixXd run(const Eigen::MatrixXd& likelihood_matrix);
+    virtual EHMTreePtr constructTree(const Eigen::MatrixXd& likelihood_matrix);
 };
 
 } // namespace core

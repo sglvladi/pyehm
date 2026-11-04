@@ -1,98 +1,249 @@
 #include "Utils.h"
 
+#include <algorithm>
+#include <numeric>
+#include <stdexcept>
+#include <unordered_map>
+
 namespace ehm
 {
 namespace utils
 {
 
-Eigen::MatrixXi getNumIntersectsTable(const std::vector<std::pair<std::vector<int>, std::set<int>>>& clusters)
+TrackHypotheses toTrackHypotheses(const std::vector<TrackHypothesisArrays>& track_hypotheses)
 {
-	int num_clusters = clusters.size();
-	Eigen::MatrixXi num_intersects_table = Eigen::MatrixXi::Zero(num_clusters, num_clusters);
-	for (int i1 = 0; i1 < num_clusters - 1; i1++)
+	TrackHypotheses hypotheses;
+	for (const auto& [detections, log_likelihoods] : track_hypotheses)
 	{
-		for (int i2 = i1 + 1; i2 < num_clusters; i2++)
-		{
-			std::vector<int> intersection;
-			std::set_intersection(clusters[i1].second.begin(), clusters[i1].second.end(), clusters[i2].second.begin(), clusters[i2].second.end(), std::back_inserter(intersection));
-			num_intersects_table(i1, i2) = intersection.size();
+		if (detections.size() != log_likelihoods.size()) {
+			throw std::invalid_argument("Each track must have one log-likelihood per detection id");
 		}
+		std::vector<int> sorted_detections(detections.begin(), detections.end());
+		std::sort(sorted_detections.begin(), sorted_detections.end());
+		if (!sorted_detections.empty() && sorted_detections.front() < 0) {
+			throw std::invalid_argument("Detection ids must not be negative");
+		}
+		if (std::adjacent_find(sorted_detections.begin(), sorted_detections.end()) != sorted_detections.end()) {
+			throw std::invalid_argument("Each detection id must appear at most once per track");
+		}
+		hypotheses.detections.insert(hypotheses.detections.end(), detections.begin(), detections.end());
+		hypotheses.log_likelihoods.insert(hypotheses.log_likelihoods.end(), log_likelihoods.begin(), log_likelihoods.end());
+		hypotheses.offsets.push_back(hypotheses.detections.size());
 	}
-	return num_intersects_table;
+	return hypotheses;
 }
 
-std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& log_likelihood_matrix)
+TrackHypotheses toTrackHypotheses(const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    // Log-likelihood matrix for all detections except null
-    auto log_likelihood_matrix_true = log_likelihood_matrix(Eigen::all, Eigen::seqN(1, Eigen::last));
-
-    // Initiate parameters
-    int num_tracks = log_likelihood_matrix_true.rows();
-    int num_detections = log_likelihood_matrix_true.cols();
-
-    // Form clusters of tracks sharing measurements
-    std::set<int> missed_tracks;
-    std::vector<std::pair<std::vector<int>, std::set<int>>> clusters;
-    std::vector<ClusterPtr> clusters_obj;
-
-	for (int i = 0; i < num_tracks; i++)
+	TrackHypotheses hypotheses;
+	for (int i = 0; i < log_likelihood_matrix.rows(); i++)
 	{
-		std::pair<std::vector<int>, std::set<int>> cluster;
-		cluster.first.push_back(i);
-		for (int j = 0; j < num_detections; j++)
+		for (int j = 0; j < log_likelihood_matrix.cols(); j++)
 		{
-			if (log_likelihood_matrix_true(i, j) != LOG_ZERO)
+			// The null hypothesis is always kept, so that it can be assigned to tracks with no valid detections
+			if (j == 0 || log_likelihood_matrix(i, j) != LOG_ZERO)
 			{
-				cluster.second.insert(j+1);
+				hypotheses.detections.push_back(j);
+				hypotheses.log_likelihoods.push_back(log_likelihood_matrix(i, j));
 			}
 		}
-		clusters.push_back(cluster);
+		hypotheses.offsets.push_back(hypotheses.detections.size());
 	}
-    
-	// Get table of number of intersections between clusters
-	Eigen::MatrixXi num_intersects_table = getNumIntersectsTable(clusters);
+	return hypotheses;
+}
 
-    // Continue until we have only one cluster or none of them intersect
-    while (!clusters.empty()) {
-        // Find maximum intersection - if no intersection, break
-        Eigen::Index maxi, maxj; // Use Eigen::Index for indexing
-        int maxVal = num_intersects_table.maxCoeff(&maxi, &maxj);
-		if (maxVal == 0) {
-			break;
+static int countIntersection(const std::vector<int>& sorted_a, const std::vector<int>& sorted_b)
+{
+	int count = 0;
+	auto a = sorted_a.begin();
+	auto b = sorted_b.begin();
+	while (a != sorted_a.end() && b != sorted_b.end()) {
+		if (*a < *b) {
+			++a;
 		}
+		else if (*b < *a) {
+			++b;
+		}
+		else {
+			count++;
+			++a;
+			++b;
+		}
+	}
+	return count;
+}
 
-        // Merge one cluster into another and delete it
-		std::vector<int> merged_tracks;
-		std::set<int> merged_detections;
-		merged_tracks.insert(merged_tracks.end(), clusters[maxi].first.begin(), clusters[maxi].first.end());
-		merged_tracks.insert(merged_tracks.end(), clusters[maxj].first.begin(), clusters[maxj].first.end());
-		std::set_union(clusters[maxi].second.begin(), clusters[maxi].second.end(), clusters[maxj].second.begin(), clusters[maxj].second.end(), std::inserter(merged_detections, merged_detections.begin()));
-		clusters[maxi] = std::make_pair(merged_tracks, merged_detections);
-		clusters.erase(clusters.begin() + maxj);
+// Order the tracks of a cluster by repeatedly merging the two groups of tracks sharing the most detections. This
+// keeps tracks with common detections close together, which can greatly reduce the size of the resulting net.
+static std::vector<int> orderClusterTracks(const std::vector<int>& tracks, const TrackHypotheses& hypotheses)
+{
+	if (tracks.size() < 3) {
+		return tracks;
+	}
 
-		// Update table of number of intersections between clusters
-		num_intersects_table = getNumIntersectsTable(clusters);
-    }
+	std::vector<std::vector<int>> groups;
+	std::vector<std::vector<int>> group_detections;
+	for (int track : tracks)
+	{
+		std::vector<int> detections;
+		for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++)
+		{
+			if (hypotheses.detections[k] != 0 && hypotheses.log_likelihoods[k] != LOG_ZERO)
+			{
+				detections.push_back(hypotheses.detections[k]);
+			}
+		}
+		std::sort(detections.begin(), detections.end());
+		groups.push_back({ track });
+		group_detections.push_back(detections);
+	}
 
-	for (auto& clust : clusters) {
-		if (clust.second.size() == 0) {
-			missed_tracks.insert(clust.first[0]);
+	// Get table of number of intersections between groups
+	int num_groups = groups.size();
+	Eigen::MatrixXi num_intersects_table = Eigen::MatrixXi::Zero(num_groups, num_groups);
+	for (int i1 = 0; i1 < num_groups - 1; i1++)
+	{
+		for (int i2 = i1 + 1; i2 < num_groups; i2++)
+		{
+			num_intersects_table(i1, i2) = countIntersection(group_detections[i1], group_detections[i2]);
+		}
+	}
+
+	// All tracks of a cluster are connected, so there is always a pair of groups to merge
+	while (num_groups > 1) {
+		Eigen::Index maxi, maxj; // Use Eigen::Index for indexing
+		num_intersects_table.maxCoeff(&maxi, &maxj);
+
+		// Merge one group into another and delete it
+		groups[maxi].insert(groups[maxi].end(), groups[maxj].begin(), groups[maxj].end());
+		std::vector<int> merged_detections;
+		std::set_union(group_detections[maxi].begin(), group_detections[maxi].end(), group_detections[maxj].begin(), group_detections[maxj].end(), std::back_inserter(merged_detections));
+		group_detections[maxi] = std::move(merged_detections);
+		groups.erase(groups.begin() + maxj);
+		group_detections.erase(group_detections.begin() + maxj);
+
+		// Remove the deleted group from the table and update the entries of the merged group
+		num_groups--;
+		Eigen::Index num_moved = num_groups - maxj;
+		num_intersects_table.block(maxj, 0, num_moved, num_groups + 1) = num_intersects_table.block(maxj + 1, 0, num_moved, num_groups + 1).eval();
+		num_intersects_table.block(0, maxj, num_groups + 1, num_moved) = num_intersects_table.block(0, maxj + 1, num_groups + 1, num_moved).eval();
+		num_intersects_table.conservativeResize(num_groups, num_groups);
+		for (int i = 0; i < num_groups; i++)
+		{
+			if (i != maxi)
+			{
+				int count = countIntersection(group_detections[i], group_detections[maxi]);
+				num_intersects_table(std::min<Eigen::Index>(i, maxi), std::max<Eigen::Index>(i, maxi)) = count;
+			}
+		}
+	}
+
+	return groups[0];
+}
+
+std::vector<ClusterPtr> genClusters(const TrackHypotheses& hypotheses)
+{
+	int num_tracks = hypotheses.numTracks();
+
+	// Disjoint sets of tracks sharing measurements
+	std::vector<int> parent(num_tracks);
+	std::iota(parent.begin(), parent.end(), 0);
+	auto find_root = [&parent](int track) {
+		while (parent[track] != track) {
+			parent[track] = parent[parent[track]];
+			track = parent[track];
+		}
+		return track;
+	};
+
+	// Merge the sets of tracks that hypothesise the same detection
+	std::vector<bool> has_detections(num_tracks, false);
+	std::unordered_map<int, int> track_per_detection;
+	for (int track = 0; track < num_tracks; track++)
+	{
+		for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++)
+		{
+			if (hypotheses.detections[k] == 0 || hypotheses.log_likelihoods[k] == LOG_ZERO)
+			{
+				continue;
+			}
+			has_detections[track] = true;
+			auto [it, inserted] = track_per_detection.try_emplace(hypotheses.detections[k], track);
+			if (!inserted)
+			{
+				parent[find_root(track)] = find_root(it->second);
+			}
+		}
+	}
+
+	// Group tracks per set, with clusters ordered by their first track
+	std::vector<int> missed_tracks;
+	std::vector<int> cluster_per_root(num_tracks, -1);
+	std::vector<std::vector<int>> clusters;
+	for (int track = 0; track < num_tracks; track++)
+	{
+		if (!has_detections[track])
+		{
+			missed_tracks.push_back(track);
 			continue;
 		}
-		clust.second.insert(0);
-		std::vector<int> v_detections_vec(clust.second.begin(), clust.second.end());
-		Eigen::MatrixXd c_log_likelihood_matrix = log_likelihood_matrix(clust.first, v_detections_vec);
-		ClusterPtr cluster = std::make_shared<Cluster>(Cluster(clust.first, v_detections_vec, c_log_likelihood_matrix));
+		int root = find_root(track);
+		if (cluster_per_root[root] == -1)
+		{
+			cluster_per_root[root] = clusters.size();
+			clusters.emplace_back();
+		}
+		clusters[cluster_per_root[root]].push_back(track);
+	}
+
+	std::vector<ClusterPtr> clusters_obj;
+	for (const auto& cluster_tracks : clusters)
+	{
+		std::vector<int> tracks = orderClusterTracks(cluster_tracks, hypotheses);
+
+		// Get the sorted detections of the cluster, including the null hypothesis
+		std::vector<int> v_detections_vec = { 0 };
+		for (int track : tracks)
+		{
+			for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++)
+			{
+				if (hypotheses.detections[k] != 0 && hypotheses.log_likelihoods[k] != LOG_ZERO)
+				{
+					v_detections_vec.push_back(hypotheses.detections[k]);
+				}
+			}
+		}
+		std::sort(v_detections_vec.begin(), v_detections_vec.end());
+		v_detections_vec.erase(std::unique(v_detections_vec.begin(), v_detections_vec.end()), v_detections_vec.end());
+
+		// Clusters are small relative to the full problem, so their log-likelihoods are stored as dense matrices
+		Eigen::MatrixXd c_log_likelihood_matrix = Eigen::MatrixXd::Constant(tracks.size(), v_detections_vec.size(), LOG_ZERO);
+		for (int i = 0; i < tracks.size(); i++)
+		{
+			for (Eigen::Index k = hypotheses.offsets[tracks[i]]; k < hypotheses.offsets[tracks[i] + 1]; k++)
+			{
+				if (hypotheses.log_likelihoods[k] != LOG_ZERO)
+				{
+					auto column = std::lower_bound(v_detections_vec.begin(), v_detections_vec.end(), hypotheses.detections[k]);
+					c_log_likelihood_matrix(i, column - v_detections_vec.begin()) = hypotheses.log_likelihoods[k];
+				}
+			}
+		}
+		ClusterPtr cluster = std::make_shared<Cluster>(Cluster(tracks, v_detections_vec, c_log_likelihood_matrix));
 		clusters_obj.push_back(cluster);
 	}
 
 	if (!missed_tracks.empty()) {
-		std::vector<int> missed_tracks_vec(missed_tracks.begin(), missed_tracks.end());
-		ClusterPtr c = std::make_shared<Cluster>(Cluster(missed_tracks_vec));
+		ClusterPtr c = std::make_shared<Cluster>(Cluster(missed_tracks));
 		clusters_obj.push_back(c);
 	}
 
-    return clusters_obj;
+	return clusters_obj;
+}
+
+std::vector<ClusterPtr> genClusters(const Eigen::MatrixXd& log_likelihood_matrix)
+{
+	return genClusters(toTrackHypotheses(log_likelihood_matrix));
 }
 
 std::vector<int> computeIdentity(const std::set<int>& acc, const std::vector<int>& parent_identity, int detection)

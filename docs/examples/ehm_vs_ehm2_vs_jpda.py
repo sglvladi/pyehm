@@ -52,7 +52,9 @@ with np.errstate(divide='ignore'):
 # This is important since :class:`~.EHM2` takes advantage of this conditional independence to reduce the number of
 # nodes in the constructed net and, as a result, achieve better computational performance than :class:`~.EHM`.
 #
-# To better understand the above, let us examine the number of nodes in the nets produced by the two algorithms:
+# To better understand the above, let us examine the number of nodes in the nets produced by the two algorithms.
+# Note that nets are constructed per cluster of tracks. All of the targets here share measurements and hence
+# form a single cluster, but in general :func:`~pyehm.utils.gen_clusters` should be used first:
 #
 
 # Net constructed using EHM

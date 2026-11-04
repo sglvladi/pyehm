@@ -1,5 +1,7 @@
 #include "EHM2.h"
 
+#include <stdexcept>
+
 
 namespace ehm
 {
@@ -72,7 +74,12 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXd& log_likelihood_matrix)
         }
     }
 
-    // TODO: Add error if trees.size() != 1
+    // A cluster always results in a single tree
+    if (trees.size() != 1) {
+        throw std::invalid_argument("Expected a single cluster of tracks connected through shared detections, "
+                                    "but got " + std::to_string(trees.size()) + " unconnected groups of tracks. "
+                                    "Use gen_clusters to split the tracks into clusters first.");
+    }
 
     EHMTreePtr tree = trees[0];
 

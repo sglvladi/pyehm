@@ -70,3 +70,24 @@ print('assoc_matrix_ehm2 =\n {}'.format(np.exp(log_assoc_matrix_ehm2)))
 
 # Check if the probability matrices produced by EHM and EHM2 are equal
 print(np.allclose(np.exp(log_assoc_matrix_ehm), np.exp(log_assoc_matrix_ehm2)))
+
+# %%
+# Large numbers of targets and measurements
+# -----------------------------------------
+# When each target is only gated with a few measurements, most of the entries of the ``log_likelihood_matrix`` are
+# ``-np.inf``. Instead of allocating the whole matrix, the hypotheses of each target can be provided as a pair of
+# arrays, containing the indices of the gated measurements and their log-likelihoods. Measurement index 0 is still
+# the null hypothesis, and any measurement that is not listed for a target is not a possible association.
+
+track_hypotheses = [(np.array([0, 1]), np.log([0.1, 0.9])),
+                    (np.array([0, 1, 2, 3]), np.log([0.1, 0.3, 0.2, 0.4])),
+                    (np.array([0, 1, 2]), np.log([0.7, 0.1, 0.2])),
+                    (np.array([0, 3, 4]), np.log([0.2, 0.75, 0.05]))]
+
+# %%
+# The result then has the same form as the input, with one array of log association probabilities per target. These
+# are in the same order as the target's hypotheses:
+
+log_probs = EHM2().run(track_hypotheses)
+for target, target_log_probs in enumerate(log_probs):
+    print('target {}: {}'.format(target, np.exp(target_log_probs)))

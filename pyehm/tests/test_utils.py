@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from ..utils import Cluster, gen_clusters
-from .jdpa_naive import to_log
+from .jdpa_naive import to_log, to_track_hypotheses
 
 
 @pytest.mark.parametrize(
@@ -51,6 +51,17 @@ from .jdpa_naive import to_log
                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]),
             [Cluster([0, 2, 3, 7], [0, 1, 3, 4, 8]), Cluster([1, 4], [0, 2, 6]), Cluster([6], [0, 7]), Cluster([5, 8])]
         ),
+        # 5 tracks, 5 detections
+        #  > Tracks sharing the most detections are merged first, so tracks are not in ascending order. This order
+        #    matters, since it can greatly reduce the size of the constructed nets.
+        (
+            np.array([[1, 0, 1, 0, 0, 0],
+                      [1, 0, 0, 1, 0, 0],
+                      [1, 0, 0, 0, 1, 0],
+                      [1, 1, 0, 1, 0, 0],
+                      [1, 0, 0, 1, 1, 0]]),
+            [Cluster([0], [0, 2]), Cluster([1, 3, 4, 2], [0, 1, 3, 4])]
+        ),
     ]
 )
 def test_clustering(gating_mask, val_clusters):
@@ -63,11 +74,12 @@ def test_clustering(gating_mask, val_clusters):
 
     log_likelihood_matrix = to_log(likelihood_matrix)
 
-    clusters = gen_clusters(log_likelihood_matrix)
-    assert len(clusters) == len(val_clusters)
-    for cluster, val_cluster in zip(clusters, val_clusters):
-        assert cluster.tracks == val_cluster.tracks
-        assert cluster.detections == val_cluster.detections
-        if len(cluster.detections):
-            assert np.array_equal(cluster.log_likelihood_matrix,
-                                  log_likelihood_matrix[cluster.tracks, :][:, cluster.detections])
+    # Clusters must be the same whether generated from a matrix or per-track hypotheses
+    for clusters in (gen_clusters(log_likelihood_matrix), gen_clusters(to_track_hypotheses(likelihood_matrix))):
+        assert len(clusters) == len(val_clusters)
+        for cluster, val_cluster in zip(clusters, val_clusters):
+            assert cluster.tracks == val_cluster.tracks
+            assert cluster.detections == val_cluster.detections
+            if len(cluster.detections):
+                assert np.array_equal(cluster.log_likelihood_matrix,
+                                      log_likelihood_matrix[cluster.tracks, :][:, cluster.detections])

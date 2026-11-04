@@ -8,6 +8,16 @@ def to_log(likelihood_matrix):
         return np.log(likelihood_matrix)
 
 
+def to_track_hypotheses(likelihood_matrix):
+    """Convert a likelihood matrix to per-track detection ids and log-likelihoods"""
+    log_likelihood_matrix = to_log(likelihood_matrix)
+    track_hypotheses = list()
+    for track in range(likelihood_matrix.shape[0]):
+        detections = np.flatnonzero(likelihood_matrix[track, :])
+        track_hypotheses.append((detections, log_likelihood_matrix[track, detections]))
+    return track_hypotheses
+
+
 def jpda_naive(likelihood_matrix):
     num_tracks, num_detections = likelihood_matrix.shape
 

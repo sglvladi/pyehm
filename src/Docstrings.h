@@ -21,19 +21,22 @@ namespace docstrings
     std::string EHMTree_nodes();
 
     std::string Cluster();
-    std::string gen_clusters();
+    std::string gen_clusters_log_likelihood_matrix();
+    std::string gen_clusters_track_hypotheses();
 
     std::string EHM();
     std::string EHM_construct_net();
     std::string EHM_construct_tree();
     std::string EHM_compute_association_probabilities();
-    std::string EHM_run();
+    std::string EHM_run_log_likelihood_matrix();
+    std::string EHM_run_track_hypotheses();
 
     std::string EHM2();
     std::string EHM2_construct_net();
     std::string EHM2_construct_tree();
     std::string EHM2_compute_association_probabilities();
-    std::string EHM2_run();
+    std::string EHM2_run_log_likelihood_matrix();
+    std::string EHM2_run_track_hypotheses();
 
 
 

@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx_gallery.gen_gallery',
     "sphinxcontrib.jquery",
+    'pybind_overloads',
 ]
 napoleon_google_docstring = False
 

@@ -10,9 +10,15 @@ The interfaces of these classes are documented below.
 
 .. autoclass:: pyehm.core.EHM
     :members:
+    :exclude-members: run
+
+    .. autooverloads:: pyehm.core.EHM.run
 
 .. autoclass:: pyehm.core.EHM2
     :members:
+    :exclude-members: run
+
+    .. autooverloads:: pyehm.core.EHM2.run
 
 Net API
 -------
@@ -41,7 +47,7 @@ The :mod:`pyehm.utils` module contains helper classes and functions.
 .. autoclass:: pyehm.utils.Cluster
     :members:
 
-.. autofunction:: pyehm.utils.gen_clusters
+.. autooverloads:: pyehm.utils.gen_clusters
 
 .. autofunction:: pyehm.utils.to_nx_graph
 

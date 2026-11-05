@@ -2,29 +2,22 @@ import numpy as np
 import pytest
 
 
+def pytest_configure(config):
+    # Tests must not use the deprecated pyehm 2.2 API, except where they check it with pytest.deprecated_call
+    config.addinivalue_line('filterwarnings', 'error::DeprecationWarning:pyehm')
+    config.addinivalue_line('filterwarnings', 'error::FutureWarning:pyehm')
+
+
 @pytest.fixture()
 def scenarios():
     inputs = dict()
     inputs['scenarioA'] = dict()
-    inputs['scenarioA']['validation_matrix'] = np.array([[1, 1, 0, 0, 0],
-                                                         [1, 1, 1, 1, 0],
-                                                         [1, 1, 1, 0, 0],
-                                                         [1, 0, 0, 1, 1]])
     inputs['scenarioA']['likelihood_matrix'] = np.array([[0.1, 0.9, 0, 0, 0],
                                                          [0.1, 0.3, 0.2, 0.4, 0],
                                                          [0.7, 0.1, 0.2, 0, 0],
                                                          [0.2, 0, 0, 0.75, 0.05]])
 
     inputs['scenarioB'] = dict()
-    inputs['scenarioB']['validation_matrix'] = np.array([[1, 1, 0, 1, 0, 0, 0, 0],
-                                                         [1, 0, 1, 0, 0, 1, 0, 0],
-                                                         [1, 1, 0, 0, 0, 0, 0, 1],
-                                                         [1, 0, 0, 0, 1, 0, 0, 1],
-                                                         [1, 0, 1, 0, 0, 0, 0, 0],
-                                                         [1, 0, 0, 0, 0, 0, 0, 1],
-                                                         [1, 0, 1, 0, 0, 0, 1, 0],
-                                                         [1, 0, 1, 0, 1, 0, 0, 0],
-                                                         [1, 0, 0, 0, 1, 0, 0, 0]])
     inputs['scenarioB']['likelihood_matrix'] = np.array([[0.1, 0.9, 0, 0.1, 0, 0, 0, 0],
                                                          [0.6, 0, 0.2, 0, 0, 0.2, 0, 0],
                                                          [0.2, 0.6, 0, 0, 0, 0, 0, 0.2],
@@ -36,16 +29,6 @@ def scenarios():
                                                          [0.8, 0, 0, 0, 0.2, 0, 0, 0]])
 
     inputs['scenarioC'] = dict()
-    inputs['scenarioC']['validation_matrix'] = np.array([[1, 1, 0, 1, 0, 0, 0, 0],
-                                                         [1, 0, 1, 0, 0, 1, 0, 0],
-                                                         [1, 1, 0, 0, 0, 0, 0, 1],
-                                                         [1, 0, 0, 0, 1, 0, 0, 1],
-                                                         [1, 0, 1, 0, 0, 0, 0, 0],
-                                                         [1, 0, 0, 0, 0, 0, 0, 0],
-                                                         [1, 0, 0, 0, 0, 0, 1, 0],
-                                                         [1, 0, 0, 0, 1, 0, 0, 0],
-                                                         [1, 0, 0, 0, 0, 0, 0, 0]])
-
     inputs['scenarioC']['likelihood_matrix'] = np.array([[0.1, 0.9, 0, 0.1, 0, 0, 0, 0],
                                                          [0.6, 0, 0.2, 0, 0, 0.2, 0, 0],
                                                          [0.2, 0.6, 0, 0, 0, 0, 0, 0.2],

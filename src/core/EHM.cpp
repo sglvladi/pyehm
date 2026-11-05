@@ -1,5 +1,8 @@
 #include "EHM.h"
 
+#include <algorithm>
+#include <stdexcept>
+
 
 namespace ehm
 {
@@ -10,19 +13,19 @@ EHM::EHM()
 {
 }
 
-EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
+EHMNetPtr EHM::constructNet(const Eigen::MatrixXd& log_likelihood_matrix)
 {
 	// Cache number of tracks and detections
-    int num_tracks = validation_matrix.rows();
-    int num_detections = validation_matrix.cols();
+    int num_tracks = log_likelihood_matrix.rows();
+    int num_detections = log_likelihood_matrix.cols();
 
     // Construct tree
-    EHMTreePtr tree = constructTree(validation_matrix);
+    EHMTreePtr tree = constructTree(log_likelihood_matrix);
     std::vector<EHMTreePtr> nodes = tree->getNodes();
 
     // Initialise net
     EHMNetNodePtr root = std::make_shared<EHMNetNode>(EHMNetNode(0, {}));
-    EHMNetPtr net = std::make_shared<EHMNet>(EHMNet(root, validation_matrix, tree));
+    EHMNetPtr net = std::make_shared<EHMNet>(EHMNet(root, log_likelihood_matrix, tree));
 
     // Construct net
     std::stack<EHMTreePtr> stack;
@@ -38,7 +41,7 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
         std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++)
         {
-            if (net->validation_matrix(tree->track, detection) == 1)
+            if (net->log_likelihood_matrix(tree->track, detection) != LOG_ZERO)
             {
                 v_detections.insert(detection);
             }
@@ -127,10 +130,12 @@ EHMNetPtr EHM::constructNet(const Eigen::MatrixXi& validation_matrix)
 
 }
 
-Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::MatrixXd& likelihood_matrix)
+Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    int num_tracks = likelihood_matrix.rows();
-    int num_detections = likelihood_matrix.cols();
+    // NOTE: All weights are kept in log space, i.e. products become sums and sums become log-adds,
+    // so that long products of small likelihoods cannot underflow.
+    int num_tracks = log_likelihood_matrix.rows();
+    int num_detections = log_likelihood_matrix.cols();
     int num_nodes = net->getNumNodes();
     std::vector<EHMNetNodePtr> nodes = net->getNodes();
     std::vector<EHMNetNodePtr> nodes_forward = net->getNodesForward();
@@ -140,41 +145,41 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
     for (int i = 0; i < num_tracks; i++) {
         std::set<int> v_detections;
         for (int detection = 0; detection < num_detections; detection++) {
-            if (net->validation_matrix(i, detection) == 1) {
+            if (net->log_likelihood_matrix(i, detection) != LOG_ZERO) {
                 v_detections.insert(detection);
             }
         }
         valid_detections_per_track.push_back(v_detections);
     }
 
-    // Compute w_B (Backward-pass) - Eq. (47) of [EHM2]
-    Eigen::VectorXd w_B = Eigen::VectorXd::Zero(num_nodes);
+    // Compute log w_B (Backward-pass) - Eq. (47) of [EHM2]
+    Eigen::VectorXd log_w_B = Eigen::VectorXd::Constant(num_nodes, LOG_ZERO);
     for (int i = num_nodes - 1; i >= 0; i--) {
         EHMNetNodePtr parent = nodes_forward[i];
         int p_i = parent->id;
         if (parent->layer == -1) {
-            w_B(p_i) = 1;
+            log_w_B(p_i) = 0;
         }
         else {
-            double weight = 0;
+            double log_weight = LOG_ZERO;
             std::set<int> v_detections_tmp = valid_detections_per_track[parent->layer];
 			std::unordered_set<int> v_detections = computeRemainingDetections(v_detections_tmp, parent->identity);
             for (int detection : v_detections) {
                 std::vector<EHMNetNodePtr> v_children = net->getChildrenPerDetection(parent, detection);
-                double weight_det = likelihood_matrix(parent->layer, detection);
+                double log_weight_det = log_likelihood_matrix(parent->layer, detection);
                 for (EHMNetNodePtr child : v_children) {
                     int c_i = child->id;
-                    weight_det *= w_B(c_i);
+                    log_weight_det += log_w_B(c_i);
                 }
-                weight += weight_det;
+                log_weight = logAdd(log_weight, log_weight_det);
             }
-            w_B(p_i) = weight;
+            log_w_B(p_i) = log_weight;
         }
     }
 
-    // Compute w_F (Forward-pass) - Eq. (49) of [EHM2]
-    Eigen::VectorXd w_F = Eigen::VectorXd::Zero(num_nodes);
-    w_F(0) = 1;
+    // Compute log w_F (Forward-pass) - Eq. (49) of [EHM2]
+    Eigen::VectorXd log_w_F = Eigen::VectorXd::Constant(num_nodes, LOG_ZERO);
+    log_w_F(0) = 0;
     for (auto& parent : nodes_forward) {
         if (parent->layer == -1) {
             continue;
@@ -195,16 +200,16 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
                 int c_i = child->id;
                 std::set<int> sibling_inds(v_children_inds.begin(), v_children_inds.end());
                 sibling_inds.erase(c_i);
-                double sibling_weight = 1;
+                double log_sibling_weight = 0;
                 for (int sibling_ind : sibling_inds) {
-                    sibling_weight *= w_B(sibling_ind);
+                    log_sibling_weight += log_w_B(sibling_ind);
                 }
-                w_F(c_i) += w_F(p_i) * likelihood_matrix(parent->layer, detection) * sibling_weight;
+                log_w_F(c_i) = logAdd(log_w_F(c_i), log_w_F(p_i) + log_likelihood_matrix(parent->layer, detection) + log_sibling_weight);
             }
         }
     }
-    // Compute association probs - Eq. (46) of [EHM2]
-    Eigen::MatrixXd a_matrix = Eigen::MatrixXd::Zero(num_tracks, num_detections);
+    // Compute log association probs - Eq. (46) of [EHM2]
+    Eigen::MatrixXd log_a_matrix = Eigen::MatrixXd::Constant(num_tracks, num_detections, LOG_ZERO);
     for (int track = 0; track < num_tracks; track++) {
         std::set<int> v_detections_tmp = valid_detections_per_track[track];
         for (auto& parent : net->getNodesByLayer(track)) {
@@ -215,59 +220,104 @@ Eigen::MatrixXd EHM::computeAssociationMatrix(const EHMNetPtr net, const Eigen::
                 if (v_children.empty()) {
                     continue;
                 }
-                double weight = likelihood_matrix(track, detection) * w_F(parent->id);
+                double log_weight = log_likelihood_matrix(track, detection) + log_w_F(parent->id);
                 for (auto& child : v_children) {
-                    weight *= w_B(child->id);
+                    log_weight += log_w_B(child->id);
                 }
-                a_matrix(track, detection) += weight;
+                log_a_matrix(track, detection) = logAdd(log_a_matrix(track, detection), log_weight);
             }
         }
         // Normalise
-        a_matrix(track, Eigen::all) /= a_matrix(track, Eigen::all).sum();
+        double log_norm = LOG_ZERO;
+        for (int detection = 0; detection < num_detections; detection++) {
+            log_norm = logAdd(log_norm, log_a_matrix(track, detection));
+        }
+        log_a_matrix(track, Eigen::all).array() -= log_norm;
     }
 
-    return a_matrix;
+    return log_a_matrix;
 }
 
-Eigen::MatrixXd EHM::run(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix)
+Eigen::MatrixXd EHM::run(const Eigen::MatrixXd& log_likelihood_matrix)
+{
+    TrackHypotheses hypotheses = toTrackHypotheses(log_likelihood_matrix);
+    std::vector<double> log_probabilities = runHypotheses(hypotheses);
+
+    // Write the log association probabilities to their respective matrix entries
+    Eigen::MatrixXd log_a_matrix = Eigen::MatrixXd::Constant(log_likelihood_matrix.rows(), log_likelihood_matrix.cols(), LOG_ZERO);
+    for (int track = 0; track < hypotheses.numTracks(); track++) {
+        for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++) {
+            log_a_matrix(track, hypotheses.detections[k]) = log_probabilities[k];
+        }
+    }
+    return log_a_matrix;
+}
+
+std::vector<Eigen::VectorXd> EHM::run(const std::vector<TrackHypothesisArrays>& track_hypotheses)
+{
+    TrackHypotheses hypotheses = toTrackHypotheses(track_hypotheses);
+    std::vector<double> log_probabilities = runHypotheses(hypotheses);
+
+    // Split the log association probabilities per track
+    std::vector<Eigen::VectorXd> track_log_probabilities;
+    track_log_probabilities.reserve(hypotheses.numTracks());
+    for (int track = 0; track < hypotheses.numTracks(); track++) {
+        Eigen::Index num_hypotheses = hypotheses.offsets[track + 1] - hypotheses.offsets[track];
+        track_log_probabilities.push_back(Eigen::Map<const Eigen::VectorXd>(log_probabilities.data() + hypotheses.offsets[track], num_hypotheses));
+    }
+    return track_log_probabilities;
+}
+
+std::vector<double> EHM::runHypotheses(const TrackHypotheses& hypotheses)
 {
     // Cluster tracks into groups that share common detections
-    std::vector<ClusterPtr> clusters = genClusters(validation_matrix, likelihood_matrix);
+    std::vector<ClusterPtr> clusters = genClusters(hypotheses);
 
-    // Initialise the association probabilities matrix
-    Eigen::MatrixXd a_matrix = Eigen::MatrixXd::Zero(validation_matrix.rows(), validation_matrix.cols());
+    // Initialise the log association probabilities, one per hypothesis
+    std::vector<double> log_probabilities(hypotheses.detections.size(), LOG_ZERO);
 
     // Perform EHM for each cluster
     for (ClusterPtr cluster : clusters) {
         // Extract track and detection indices
-        std::vector<int> c_tracks = cluster->tracks;
-        std::vector<int> c_detections = cluster->detections;
+        const std::vector<int>& c_tracks = cluster->tracks;
+        const std::vector<int>& c_detections = cluster->detections;
 
         if (c_detections.size() == 0) {
-            a_matrix(c_tracks, 0).setOnes();
+            // Tracks with no valid detections are missed with probability 1 (i.e. log-probability 0)
+            for (int track : c_tracks) {
+                for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++) {
+                    if (hypotheses.detections[k] == 0) {
+                        log_probabilities[k] = 0;
+                    }
+                }
+            }
             continue;
         }
 
-        // Extract validation and likelihood matrices for cluster
-        Eigen::MatrixXi c_validation_matrix = cluster->validation_matrix;
-        Eigen::MatrixXd c_likelihood_matrix = cluster->likelihood_matrix;
-
         // Construct the EHM net
-        EHMNetPtr net = constructNet(c_validation_matrix);
+        EHMNetPtr net = constructNet(cluster->log_likelihood_matrix);
 
-        // Compute the association probabilities
-        Eigen::MatrixXd c_a_matrix = computeAssociationMatrix(net, c_likelihood_matrix);
+        // Compute the log association probabilities
+        Eigen::MatrixXd c_log_a_matrix = computeAssociationMatrix(net, cluster->log_likelihood_matrix);
 
-        // Update the association probabilities matrix
-        a_matrix(c_tracks, c_detections) = c_a_matrix;
+        // Write the log association probabilities of each valid hypothesis
+        for (int i = 0; i < c_tracks.size(); i++) {
+            int track = c_tracks[i];
+            for (Eigen::Index k = hypotheses.offsets[track]; k < hypotheses.offsets[track + 1]; k++) {
+                if (hypotheses.log_likelihoods[k] != LOG_ZERO) {
+                    auto column = std::lower_bound(c_detections.begin(), c_detections.end(), hypotheses.detections[k]);
+                    log_probabilities[k] = c_log_a_matrix(i, column - c_detections.begin());
+                }
+            }
+        }
     }
-    return a_matrix;
+    return log_probabilities;
 }
 
-EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
+EHMTreePtr EHM::constructTree(const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    int num_tracks = validation_matrix.rows();
-    int num_detections = validation_matrix.cols();
+    int num_tracks = log_likelihood_matrix.rows();
+    int num_detections = log_likelihood_matrix.cols();
 
     EHMTreePtr tree;
 
@@ -276,7 +326,7 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
-            if (validation_matrix(i, detection) == 1)
+            if (log_likelihood_matrix(i, detection) != LOG_ZERO)
             {
                 v_detections.push_back(detection);
             }
@@ -292,6 +342,10 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
 			tree = std::make_shared<EHMTree>(EHMTree(i, {tree}, detections));
         }
         
+    }
+    if (tree == nullptr) {
+        throw std::invalid_argument("Expected at least one track. Clusters generated by gen_clusters for "
+                                    "tracks with no detections have no matrix and should be skipped.");
     }
     return tree;
 }

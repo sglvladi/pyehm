@@ -1,5 +1,7 @@
 #include "EHM2.h"
 
+#include <stdexcept>
+
 
 namespace ehm
 {
@@ -10,10 +12,10 @@ EHM2::EHM2()
 {
 }
 
-EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
+EHMTreePtr EHM2::constructTree(const Eigen::MatrixXd& log_likelihood_matrix)
 {
-    int num_tracks = validation_matrix.rows();
-    int num_detections = validation_matrix.cols();
+    int num_tracks = log_likelihood_matrix.rows();
+    int num_detections = log_likelihood_matrix.cols();
 
     std::vector<EHMTreePtr> trees;
 
@@ -22,7 +24,7 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         std::vector<int> v_detections;
         for (int detection = 1; detection < num_detections; detection++)
         {
-            if (validation_matrix(i, detection) == 1)
+            if (log_likelihood_matrix(i, detection) != LOG_ZERO)
             {
                 v_detections.push_back(detection);
             }
@@ -72,7 +74,12 @@ EHMTreePtr EHM2::constructTree(const Eigen::MatrixXi& validation_matrix)
         }
     }
 
-    // TODO: Add error if trees.size() != 1
+    // A cluster always results in a single tree
+    if (trees.size() != 1) {
+        throw std::invalid_argument("Expected a single cluster of tracks connected through shared detections, "
+                                    "but got " + std::to_string(trees.size()) + " unconnected groups of tracks. "
+                                    "Use gen_clusters to split the tracks into clusters first.");
+    }
 
     EHMTreePtr tree = trees[0];
 

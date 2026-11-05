@@ -2,13 +2,29 @@ import itertools
 import numpy as np
 
 
-def jpda_naive(validation_matrix, likelihood_matrix):
-    num_tracks, num_detections = validation_matrix.shape
+def to_log(likelihood_matrix):
+    """Take the log of a likelihood matrix, mapping zero (invalid) entries to -inf"""
+    with np.errstate(divide='ignore'):
+        return np.log(likelihood_matrix)
+
+
+def to_track_hypotheses(likelihood_matrix):
+    """Convert a likelihood matrix to per-track detection ids and log-likelihoods"""
+    log_likelihood_matrix = to_log(likelihood_matrix)
+    track_hypotheses = list()
+    for track in range(likelihood_matrix.shape[0]):
+        detections = np.flatnonzero(likelihood_matrix[track, :])
+        track_hypotheses.append((detections, log_likelihood_matrix[track, detections]))
+    return track_hypotheses
+
+
+def jpda_naive(likelihood_matrix):
+    num_tracks, num_detections = likelihood_matrix.shape
 
     possible_assoc = list()
     for track in range(num_tracks):
         track_possible_assoc = list()
-        v_detections = np.flatnonzero(validation_matrix[track, :])
+        v_detections = np.flatnonzero(likelihood_matrix[track, :])
         for detection in v_detections:
             track_possible_assoc.append((track, detection))
         possible_assoc.append(track_possible_assoc)
@@ -31,7 +47,7 @@ def jpda_naive(validation_matrix, likelihood_matrix):
 
     assoc_matrix = np.zeros((num_tracks, num_detections))
     for track in range(num_tracks):
-        v_detections = np.flatnonzero(validation_matrix[track, :])
+        v_detections = np.flatnonzero(likelihood_matrix[track, :])
         for detection in v_detections:
             prob = np.sum([lik for hyp, lik in valid_joint_hypotheses_lik.items() if (track, detection) in hyp])
             assoc_matrix[track, detection] = prob
@@ -55,14 +71,14 @@ def isvalidhyp(joint_hyp):
 
 def gen_random_scenario(num_tracks, num_detections):
 
-    validation_matrix = np.zeros((num_tracks, num_detections+1))
-    validation_matrix[:, 0] = 1
+    gating_mask = np.zeros((num_tracks, num_detections+1))
+    gating_mask[:, 0] = 1
     for i in range(num_tracks):
-        validation_matrix[i, 1:] = np.random.randint(0, 2, (num_detections,))
+        gating_mask[i, 1:] = np.random.randint(0, 2, (num_detections,))
 
     likelihood_matrix = np.zeros((num_tracks, num_detections + 1))
     for i in range(num_tracks):
         liks = np.random.rand(num_detections+1)
-        likelihood_matrix[i, :] = validation_matrix[i, :]*liks
+        likelihood_matrix[i, :] = gating_mask[i, :]*liks
 
-    return validation_matrix, likelihood_matrix
+    return likelihood_matrix

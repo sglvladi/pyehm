@@ -42,8 +42,8 @@ PYBIND11_MODULE(_pyehm, m) {
 
     // Nets
     py::class_<EHMNet, EHMNetPtr>(net_m, "EHMNet", docstrings::EHMNet().c_str())
-        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXi&, const EHMTreePtr>(), "root"_a, "validation_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
-        .def_readonly("validation_matrix", &EHMNet::validation_matrix)
+        .def(py::init<const EHMNetNodePtr, const Eigen::MatrixXd&, const EHMTreePtr>(), "root"_a, "log_likelihood_matrix"_a, "tree"_a, docstrings::EHMNet___init__().c_str())
+        .def_readonly("log_likelihood_matrix", &EHMNet::log_likelihood_matrix)
         .def_property_readonly("num_layers", &EHMNet::getNumLayers, docstrings::EHMNet_num_layers().c_str())
         .def_property_readonly("num_nodes", &EHMNet::getNumNodes, docstrings::EHMNet_num_nodes().c_str())
         .def_property_readonly("root", &EHMNet::getRoot, docstrings::EHMNet_root().c_str())
@@ -62,32 +62,43 @@ PYBIND11_MODULE(_pyehm, m) {
 
     // Utils
     py::class_<Cluster, ClusterPtr>(utils_m, "Cluster", docstrings::Cluster().c_str())
-        .def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXi, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "validation_matrix"_a = Eigen::MatrixXi::Zero(0, 0), "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
+        .def(py::init<std::vector<int>, std::vector<int>, Eigen::MatrixXd>(), "tracks"_a, "detections"_a = std::vector<int>(), "log_likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0))
         .def_readwrite("tracks", &Cluster::tracks)
         .def_readwrite("detections", &Cluster::detections)
-        .def_readwrite("validation_matrix", &Cluster::validation_matrix)
-        .def_readwrite("likelihood_matrix", &Cluster::likelihood_matrix);
-    utils_m.def("gen_clusters", &genClusters, "validation_matrix"_a, "likelihood_matrix"_a = Eigen::MatrixXd::Zero(0, 0), docstrings::gen_clusters().c_str());
+        .def_readwrite("log_likelihood_matrix", &Cluster::log_likelihood_matrix);
+    // NOTE: Matrix overloads must come first, since a matrix with no rows is also an empty sequence
+    utils_m.def("gen_clusters", py::overload_cast<const Eigen::MatrixXd&>(&genClusters), "log_likelihood_matrix"_a, docstrings::gen_clusters_log_likelihood_matrix().c_str());
+    utils_m.def("gen_clusters", [](const std::vector<TrackHypothesisArrays>& track_hypotheses) {
+            return genClusters(toTrackHypotheses(track_hypotheses));
+        }, "track_hypotheses"_a, docstrings::gen_clusters_track_hypotheses().c_str());
 
     // Algorithms
     py::class_<EHM>(core_m, "EHM", docstrings::EHM().c_str())
         .def(py::init<>())
-        .def("construct_net", &EHM::constructNet, "validation_matrix"_a, docstrings::EHM_construct_net().c_str())
-        .def("construct_tree", &EHM::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
-        .def("run", [](EHM& self, const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix) ->  Eigen::MatrixXd { 
+        .def("construct_net", &EHM::constructNet, "log_likelihood_matrix"_a, docstrings::EHM_construct_net().c_str())
+        .def("construct_tree", &EHM::constructTree, "log_likelihood_matrix"_a, docstrings::EHM_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM::computeAssociationMatrix, "net"_a, "log_likelihood_matrix"_a, docstrings::EHM_compute_association_probabilities().c_str())
+        .def("run", [](EHM& self, const Eigen::MatrixXd& log_likelihood_matrix) -> Eigen::MatrixXd {
             py::gil_scoped_release release;
-            return self.run(validation_matrix, likelihood_matrix); 
-        }, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM_run().c_str());
+            return self.run(log_likelihood_matrix);
+        }, "log_likelihood_matrix"_a, docstrings::EHM_run_log_likelihood_matrix().c_str())
+        .def("run", [](EHM& self, const std::vector<TrackHypothesisArrays>& track_hypotheses) -> std::vector<Eigen::VectorXd> {
+            py::gil_scoped_release release;
+            return self.run(track_hypotheses);
+        }, "track_hypotheses"_a, docstrings::EHM_run_track_hypotheses().c_str());
     py::class_<EHM2>(core_m, "EHM2", docstrings::EHM2().c_str())
         .def(py::init<>())
-        .def("construct_net", &EHM2::constructNet, "validation_matrix"_a, docstrings::EHM2_construct_net().c_str())
-        .def("construct_tree", &EHM2::constructTree, "validation_matrix"_a, docstrings::EHM2_construct_tree().c_str())
-        .def("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
-        .def("run", [](EHM2& self, const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix) ->  Eigen::MatrixXd {
+        .def("construct_net", &EHM2::constructNet, "log_likelihood_matrix"_a, docstrings::EHM2_construct_net().c_str())
+        .def("construct_tree", &EHM2::constructTree, "log_likelihood_matrix"_a, docstrings::EHM2_construct_tree().c_str())
+        .def("compute_association_probabilities", &EHM2::computeAssociationMatrix, "net"_a, "log_likelihood_matrix"_a, docstrings::EHM2_compute_association_probabilities().c_str())
+        .def("run", [](EHM2& self, const Eigen::MatrixXd& log_likelihood_matrix) -> Eigen::MatrixXd {
             py::gil_scoped_release release;
-            return self.run(validation_matrix, likelihood_matrix);
-        }, "validation_matrix"_a, "likelihood_matrix"_a, docstrings::EHM2_run().c_str());
+            return self.run(log_likelihood_matrix);
+        }, "log_likelihood_matrix"_a, docstrings::EHM2_run_log_likelihood_matrix().c_str())
+        .def("run", [](EHM2& self, const std::vector<TrackHypothesisArrays>& track_hypotheses) -> std::vector<Eigen::VectorXd> {
+            py::gil_scoped_release release;
+            return self.run(track_hypotheses);
+        }, "track_hypotheses"_a, docstrings::EHM2_run_track_hypotheses().c_str());
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

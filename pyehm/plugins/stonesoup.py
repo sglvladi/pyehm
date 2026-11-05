@@ -46,12 +46,12 @@ class JPDAWithEHM(JPDA):
         return multi_hypotheses
 
     @staticmethod
-    def _run_ehm(validation_matrix, likelihood_matrix):
-        return EHM().run(validation_matrix, likelihood_matrix)
+    def _run_ehm(track_hypotheses):
+        return EHM().run(track_hypotheses)
 
     @staticmethod
-    def _calc_validation_and_likelihood_matrices(tracks, detections, hypotheses):
-        """ Compute the validation and likelihood matrices
+    def _calc_track_hypotheses(tracks, detections, hypotheses):
+        """ Compute the detection ids and log-likelihoods of each track's hypotheses
 
         Parameters
         ----------
@@ -64,35 +64,27 @@ class JPDAWithEHM(JPDA):
 
         Returns
         -------
-        :class:`numpy.ndarray`
-            An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
-            (aka. valid) associations between tracks and detections. The first column corresponds
-            to the null hypothesis (hence contains all ones).
-        :class:`numpy.ndarray`
-            A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
-            likelihoods for all combinations of tracks and detections. The first column corresponds
-            to the null hypothesis.
+        list of tuple of (:class:`numpy.ndarray`, :class:`numpy.ndarray`)
+            A pair of arrays per track, containing the detection id and the log of the unnormalised
+            likelihood of each of the track's hypotheses, in order. Detection id 0 corresponds to the
+            null hypothesis.
         """
 
-        # Ensure tracks and detections are lists (not sets)
-        tracks, detections = list(tracks), list(detections)
+        # Detection ids start at 1, since 0 corresponds to the null hypothesis
+        detection_ids = dict()
+        for j, detection in enumerate(detections, start=1):
+            detection_ids.setdefault(detection, j)
 
-        # Construct validation and likelihood matrices
-        # Both matrices have shape (num_tracks, num_detections + 1), where the first column
-        # corresponds to the null hypothesis.
-        num_tracks, num_detections = len(tracks), len(detections)
-        likelihood_matrix = np.zeros((num_tracks, num_detections + 1))
-        for i, track in enumerate(tracks):
-            for hyp in hypotheses[track]:
-                if not hyp:
-                    likelihood_matrix[i, 0] = hyp.weight
-                else:
-                    j = next(d_i for d_i, detection in enumerate(detections)
-                             if hyp.measurement == detection)
-                    likelihood_matrix[i, j + 1] = hyp.weight
-        validation_matrix = likelihood_matrix > 0
+        # NOTE: Weights are converted via their log value, since converting them to float can
+        # underflow to zero for very small likelihoods.
+        track_hypotheses = list()
+        for track in tracks:
+            track_detections = [detection_ids[hyp.measurement] if hyp else 0 for hyp in hypotheses[track]]
+            log_likelihoods = [Probability(hyp.weight).log_value for hyp in hypotheses[track]]
+            track_hypotheses.append((np.array(track_detections, dtype=np.int32),
+                                     np.array(log_likelihoods, dtype=float)))
 
-        return validation_matrix.astype(int), likelihood_matrix.astype(float)
+        return track_hypotheses
 
     @classmethod
     def _compute_multi_hypotheses(cls, tracks, detections, hypotheses, time):
@@ -101,47 +93,42 @@ class JPDAWithEHM(JPDA):
         track_list = list(tracks)
         detection_list = list(detections)
 
-        # Calculate validation and likelihood matrices
-        validation_matrix, likelihood_matrix = \
-            cls._calc_validation_and_likelihood_matrices(track_list, detection_list, hypotheses)
+        # Calculate detection ids and log-likelihoods of each track's hypotheses
+        track_hypotheses = cls._calc_track_hypotheses(track_list, detection_list, hypotheses)
 
         # Run EHM
-        assoc_prob_matrix = cls._run_ehm(validation_matrix, likelihood_matrix)
+        log_assoc_probs = cls._run_ehm(track_hypotheses)
 
         # Calculate MultiMeasurementHypothesis for each Track over all
-        # available Detections with probabilities drawn from the association matrix
+        # available Detections with probabilities drawn from the association probabilities
         new_hypotheses = dict()
 
-        for i, track in enumerate(track_list):
+        for track, track_log_probs in zip(track_list, log_assoc_probs):
 
             single_measurement_hypotheses = list()
+            hypotheses_and_probs = list(zip(hypotheses[track], track_log_probs))
 
             # Null measurement hypothesis
-            null_hypothesis = next((hyp for hyp in hypotheses[track] if not hyp), None)
-            prob_misdetect = Probability(assoc_prob_matrix[i, 0])
+            null_hypothesis, log_prob_misdetect = next(
+                (hyp, log_prob) for hyp, log_prob in hypotheses_and_probs if not hyp)
             single_measurement_hypotheses.append(
                 SingleProbabilityHypothesis(
                     null_hypothesis.prediction,
                     MissedDetection(timestamp=time),
                     measurement_prediction=null_hypothesis.measurement_prediction,
-                    probability=prob_misdetect))
+                    probability=Probability(log_prob_misdetect, log_value=True)))
 
             # True hypotheses
-            for hypothesis in hypotheses[track]:
+            for hypothesis, log_prob in hypotheses_and_probs:
                 if not hypothesis:
                     continue
 
-                # Get the detection index
-                j = next(d_i+1 for d_i, detection in enumerate(detection_list)
-                         if hypothesis.measurement == detection)
-
-                pro_detect_assoc = Probability(assoc_prob_matrix[i, j])
                 single_measurement_hypotheses.append(
                     SingleProbabilityHypothesis(
                         hypothesis.prediction,
                         hypothesis.measurement,
                         measurement_prediction=hypothesis.measurement_prediction,
-                        probability=pro_detect_assoc))
+                        probability=Probability(log_prob, log_value=True)))
 
             new_hypotheses[track] = MultipleHypothesis(single_measurement_hypotheses, True, 1)
 
@@ -157,6 +144,5 @@ class JPDAWithEHM2(JPDAWithEHM):
     """
 
     @staticmethod
-    def _run_ehm(validation_matrix, likelihood_matrix):
-        assoc_prob_matrix = EHM2().run(validation_matrix, likelihood_matrix)
-        return assoc_prob_matrix
+    def _run_ehm(track_hypotheses):
+        return EHM2().run(track_hypotheses)

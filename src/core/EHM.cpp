@@ -286,8 +286,9 @@ EHMTreePtr EHM::constructTree(const Eigen::MatrixXi& validation_matrix)
 			tree = std::make_shared<EHMTree>(EHMTree(i, {}, v_detections));
 		}
         else {
-            std::vector<int> detections(v_detections.begin(), v_detections.end());
-			std::set_union(detections.begin(), detections.end(), tree->detections.begin(), tree->detections.end(), std::back_inserter(detections));
+            // Output must not alias the inputs, as back_inserter may reallocate them
+            std::vector<int> detections;
+			std::set_union(v_detections.begin(), v_detections.end(), tree->detections.begin(), tree->detections.end(), std::back_inserter(detections));
 			tree = std::make_shared<EHMTree>(EHMTree(i, {tree}, detections));
         }
         

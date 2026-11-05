@@ -2,8 +2,49 @@ from typing import Union
 
 import networkx as nx
 
-from _pyehm.utils import Cluster, gen_clusters  # noqa: F401
+from _pyehm.utils import Cluster, gen_clusters as _gen_clusters  # noqa: F401
+from ._compat import bind, is_validation_matrix, remember_likelihood_matrices, to_log_likelihoods, warn_deprecated
 from .net import EHMNet, EHMTree
+
+
+def gen_clusters(*args, **kwargs):
+    legacy = (len(args) == 2 or 'validation_matrix' in kwargs or 'likelihood_matrix' in kwargs
+              or (len(args) == 1 and not kwargs and is_validation_matrix(args[0])))
+    if legacy:
+        validation_matrix, likelihood_matrix = bind(args, kwargs, ('validation_matrix', 'likelihood_matrix'),
+                                                    defaults={'likelihood_matrix': None})
+        warn_deprecated('Passing a validation matrix to gen_clusters is deprecated; pass a log-likelihood matrix '
+                        'instead, where -inf denotes invalid associations.')
+        clusters = _gen_clusters(to_log_likelihoods(validation_matrix, likelihood_matrix))
+        return remember_likelihood_matrices(clusters, likelihood_matrix)
+    return _gen_clusters(*args, **kwargs)
+
+
+gen_clusters.__doc__ = _gen_clusters.__doc__.rstrip('\n') + '''
+
+gen_clusters(validation_matrix: numpy.ndarray, likelihood_matrix: numpy.ndarray = numpy.array([])) -> List[Cluster]
+Cluster tracks into groups sharing detections, given a validation matrix as in pyehm 2.2
+
+.. deprecated:: 2.3
+    Will be removed in pyehm 3.0. Pass a log-likelihood matrix instead, where ``-numpy.inf`` denotes invalid
+    associations. A matrix that contains only 0s and 1s is interpreted as a validation matrix.
+
+Parameters
+----------
+validation_matrix: :class:`numpy.ndarray`
+    An indicator matrix of shape (num_tracks, num_detections + 1) indicating the possible
+    (aka. valid) associations between tracks and detections. The first column corresponds
+    to the null hypothesis (hence contains all ones).
+likelihood_matrix: :class:`numpy.ndarray`
+    A matrix of shape (num_tracks, num_detections + 1) containing the unnormalised
+    likelihoods for all combinations of tracks and detections. The first column corresponds
+    to the null hypothesis. Defaults to an empty array.
+
+Returns
+-------
+:class:`list` of :class:`~.Cluster`
+    The clusters of tracks.
+'''
 
 
 def to_nx_graph(obj: Union[EHMNet, EHMTree]) -> nx.Graph:

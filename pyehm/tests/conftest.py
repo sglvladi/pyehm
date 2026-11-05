@@ -2,6 +2,12 @@ import numpy as np
 import pytest
 
 
+def pytest_configure(config):
+    # Tests must not use the deprecated pyehm 2.2 API, except where they check it with pytest.deprecated_call
+    config.addinivalue_line('filterwarnings', 'error::DeprecationWarning:pyehm')
+    config.addinivalue_line('filterwarnings', 'error::FutureWarning:pyehm')
+
+
 @pytest.fixture()
 def scenarios():
     inputs = dict()

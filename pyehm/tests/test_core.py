@@ -173,7 +173,8 @@ def test_construct_net_per_cluster(ehm_class):
         if len(cluster.detections):
             algorithm = ehm_class()
             net = algorithm.construct_net(cluster.log_likelihood_matrix)
-            cluster_result = algorithm.compute_association_probabilities(net, cluster.log_likelihood_matrix)
+            cluster_result = algorithm.compute_association_probabilities(
+                net, log_likelihood_matrix=cluster.log_likelihood_matrix)
             result[np.ix_(cluster.tracks, cluster.detections)] = cluster_result
         else:
             result[cluster.tracks, 0] = 0

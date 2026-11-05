@@ -23,6 +23,7 @@ htmlcov/
 .idea/
 .vs/
 x64/
+cmake-build-*/
 
 # Notebooks
 examples/.ipynb_checkpoints
